@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Code Runner</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        textarea { width: 80%; height: 200px; }
+        select, button { margin: 10px; padding: 10px; }
+        pre { background: #f4f4f4; padding: 10px; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <h1>Run Your Code Online</h1>
+    
+    <label for="language">Choose Language:</label>
+    <select id="language">
+        <option value="python">Python</option>
+        <option value="cpp">C++</option>
+        <option value="c">C</option>
+        <option value="java">Java</option>
+    </select>
+
+    <br>
+    
+    <textarea id="code" placeholder="Write your code here..."></textarea>
+    
+    <br>
+
+    <label for="input">Enter Input:</label>
+    <textarea id="input" placeholder="Enter input for your code here..."></textarea>
+    
+    <br>
+    
+    <button onclick="runCode()">Run Code</button>
+    
+    <h2>Output:</h2>
+    <pre id="output"></pre>
+
+    <script>
+        function runCode() {
+            let code = document.getElementById("code").value;
+            let language = document.getElementById("language").value;
+            let userInput = document.getElementById("input").value;  // Get user input
+            
+            fetch("/run-code", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ language, code, input: userInput })  // Send input to server
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("output").textContent = data.output || "Error executing code.";
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+
+</body>
+</html>
