@@ -148,9 +148,8 @@ body {
 }
 
 .product-image {
-  max-width: 60px;
-  max-height: 76px;
-  object-fit: contain;
+  max-width: 140px;
+  max-height: 140px;
 }
 
 .discount-badge {
