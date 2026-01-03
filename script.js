@@ -1,120 +1,156 @@
-document.addEventListener('DOMContentLoaded', function() {
-  // Category filter functionality
-  const filterButtons = document.querySelectorAll('.filter-btn');
-  
-  filterButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      // Remove active class from all buttons
-      filterButtons.forEach(btn => btn.classList.remove('filter-active'));
-      // Add active class to clicked button
-      this.classList.add('filter-active');
-    });
-  });
+document.addEventListener('DOMContentLoaded', function () {
 
-  // Add to cart functionality
-  const addButtons = document.querySelectorAll('.add-btn');
-  const cartBadge = document.querySelector('.cart-badge');
-  
-  // Get cart count from parent window if in iframe, otherwise from local badge
+  /* ================================
+     STATE
+  ================================= */
   let cartCount = 0;
-  try {
-    if (window.parent !== window && window.parent.document.querySelector('.cart-badge')) {
-      cartCount = parseInt(window.parent.document.querySelector('.cart-badge').textContent) || 0;
-    } else if (cartBadge) {
-      cartCount = parseInt(cartBadge.textContent) || 0;
-    }
-  } catch(err) {
-    cartCount = cartBadge ? parseInt(cartBadge.textContent) || 0 : 0;
-  }
+  let isList = false;
 
-  addButtons.forEach(button => {
-    button.addEventListener('click', function(e) {
-      e.preventDefault();
-      cartCount++;
-      
-      // Update local badge if it exists
-      if (cartBadge) {
-        cartBadge.textContent = cartCount;
-      }
-      
-      // Update parent window cart count if inside iframe
-      try {
-        if (window.parent !== window) {
-          const parentBadge = window.parent.document.querySelector('.cart-badge');
-          if (parentBadge) {
-            parentBadge.textContent = cartCount;
-          }
-        }
-      } catch(err) {
-        console.log('Cannot access parent window');
-      }
-      
-      // Visual feedback
-      this.style.backgroundColor = '#4280FD';
-      this.style.color = '#FFFFFF';
-      this.textContent = 'ADDED';
-      
-      // Reset after 1.5 seconds
-      setTimeout(() => {
-        this.style.backgroundColor = '#FFFFFF';
-        this.style.color = '#4280FD';
-        this.textContent = 'ADD';
-      }, 1500);
-    });
-  });
+  /* ================================
+     CATEGORY FILTER
+  ================================= */
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const categorySections = document.querySelectorAll('.category-section');
 
-  // Search functionality
-  const searchInput = document.querySelector('.search-input');
-  const productCards = document.querySelectorAll('.product-card');
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', function () {
 
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      const searchTerm = this.value.toLowerCase();
-      
-      productCards.forEach(card => {
-        const productName = card.querySelector('.product-name').textContent.toLowerCase();
-        if (productName.includes(searchTerm)) {
-          card.style.display = 'block';
+      filterButtons.forEach(b => b.classList.remove('filter-active'));
+      this.classList.add('filter-active');
+
+      const filter = this.textContent.toLowerCase();
+
+      categorySections.forEach(section => {
+        const title = section
+          .querySelector('.category-title')
+          .textContent
+          .toLowerCase();
+
+        if (filter === 'all' || title.includes(filter)) {
+          section.style.display = 'block';
+
+          section.querySelectorAll('.products-grid')
+            .forEach(grid => grid.classList.toggle('list-view', isList));
+
         } else {
-          card.style.display = 'none';
+          section.style.display = 'none';
         }
       });
     });
+  });
+
+  /* ================================
+     CART COUNT
+  ================================= */
+  function updateCartBadge() {
+    const badge = document.querySelector('.cart-badge');
+    if (badge) badge.textContent = cartCount;
+
+    try {
+      if (window.parent !== window) {
+        const parentBadge = window.parent.document.querySelector('.cart-badge');
+        if (parentBadge) parentBadge.textContent = cartCount;
+      }
+    } catch (e) {}
   }
 
-  // Grid view button - Toggle between grid and list view
-  const gridViewButton = document.querySelector('.grid-view-btn');
-  const productsGrid = document.querySelector('.products-grid');
-  let isGridView = true;
+  /* ================================
+     ADD / QTY CONTROL
+  ================================= */
+  document.addEventListener('click', function (e) {
 
-  if (gridViewButton && productsGrid) {
-    gridViewButton.addEventListener('click', function(e) {
-      e.preventDefault();
-      isGridView = !isGridView;
+    if (e.target.classList.contains('add-btn')) {
+      const pricing = e.target.closest('.product-pricing');
+      cartCount++;
+      updateCartBadge();
 
-      if (isGridView) {
-        // Switch to grid view (2 columns)
-        productsGrid.style.gridTemplateColumns = '1fr 1fr';
-        productsGrid.style.gap = '16px';
+      const qtyBox = document.createElement('div');
+      qtyBox.className = 'qty-control';
+      qtyBox.innerHTML = `
+        <button class="qty-btn minus">−</button>
+        <span class="qty-value">1</span>
+        <button class="qty-btn plus">+</button>
+      `;
+
+      pricing.replaceChild(qtyBox, e.target);
+    }
+
+    if (e.target.classList.contains('plus')) {
+      const value = e.target.parentElement.querySelector('.qty-value');
+      value.textContent = +value.textContent + 1;
+      cartCount++;
+      updateCartBadge();
+    }
+
+    if (e.target.classList.contains('minus')) {
+      const qtyBox = e.target.parentElement;
+      const pricing = qtyBox.closest('.product-pricing');
+      const value = qtyBox.querySelector('.qty-value');
+
+      let qty = +value.textContent - 1;
+      cartCount--;
+      updateCartBadge();
+
+      if (qty === 0) {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-btn';
+        addBtn.textContent = 'ADD';
+        pricing.replaceChild(addBtn, qtyBox);
       } else {
-        // Switch to list view (1 column)
-        productsGrid.style.gridTemplateColumns = '1fr';
-        productsGrid.style.gap = '12px';
+        value.textContent = qty;
+      }
+    }
+  });
+
+  /* ================================
+   SEARCH (VIEW SAFE)
+================================ */
+const searchInput = document.querySelector('.search-input');
+const productCards = document.querySelectorAll('.product-card');
+
+if (searchInput) {
+  searchInput.addEventListener('input', function () {
+    const term = this.value.toLowerCase();
+
+    productCards.forEach(card => {
+      const name = card
+        .querySelector('.product-name')
+        .textContent
+        .toLowerCase();
+
+      if (name.includes(term)) {
+        card.style.display = ''; // let CSS decide layout
+      } else {
+        card.style.display = 'none';
       }
 
-      // Add visual feedback to button
-      gridViewButton.style.opacity = '0.6';
-      setTimeout(() => {
-        gridViewButton.style.opacity = '1';
-      }, 200);
+      // 🔥 RE-APPLY LIST/GRID STATE
+      const grid = card.closest('.products-grid');
+      if (grid) {
+        grid.classList.toggle('list-view', isList);
+      }
+    });
+  });
+}
+
+  /* ================================
+     GRID ↔ LIST TOGGLE
+  ================================= */
+  const gridBtn = document.querySelector('.grid-view-btn');
+  const grids = document.querySelectorAll('.products-grid');
+
+  if (gridBtn) {
+    gridBtn.addEventListener('click', () => {
+      isList = !isList;
+
+      grids.forEach(grid =>
+        grid.classList.toggle('list-view', isList)
+      );
+
+      gridBtn.innerHTML = isList
+        ? '<i class="fas fa-th-large"></i>'
+        : '<i class="fas fa-list"></i>';
     });
   }
 
-  // Back button functionality
-  const backButton = document.querySelector('.back-btn');
-  if (backButton) {
-    backButton.addEventListener('click', function() {
-      console.log('Navigate back');
-    });
-  }
 });
