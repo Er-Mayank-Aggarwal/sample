@@ -34,17 +34,21 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!card) return;
 
     const name = card.querySelector('.product-name').textContent;
+    
     // Get Price (Numbers only)
     const priceRaw = card.querySelector('.current-price').textContent;
     const price = parseFloat(priceRaw.replace(/[^\d.]/g, ''));
     
-    // 🔥 NEW: Get Image Source
+    // Get Image Source
     const imgEl = card.querySelector('.product-image');
     const imgSrc = imgEl ? imgEl.src : ''; 
 
+    // 🔥 FIX: Capture the "Original Price" (Strike-through) so we don't lose it
+    const originalPriceEl = card.querySelector('.original-price');
+    const originalPriceHTML = originalPriceEl ? originalPriceEl.outerHTML : '';
+
     /* ADD BUTTON CLICK */
     if (e.target.classList.contains('add-btn')) {
-      // Save Image to Cart Object
       cart[name] = { price, qty: 1, img: imgSrc };
       
       saveCart();
@@ -54,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
       pricing.innerHTML = `
         <div class="price-stack">
           <span class="current-price">${priceRaw}</span>
-        </div>
+          ${originalPriceHTML} </div>
         <div class="qty-control">
           <button class="qty-btn minus">−</button>
           <span class="qty-value">1</span>
@@ -73,12 +77,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* MINUS CLICK */
     if (e.target.classList.contains('minus')) {
-      cart[name].qty--;
-      saveCart();
-      updateCartBadge();
-
-      if (cart[name].qty === 0) {
+      cart[name].qty--; // Decrease quantity first
+      
+      // FIX: Check if 0 OR LESS (handles negative glitches)
+      if (cart[name].qty <= 0) {
         delete cart[name];
+        saveCart();
+        updateCartBadge();
+
+        // Revert to "ADD" button
         e.target.closest('.product-pricing').innerHTML = `
           <div class="price-stack">
             <span class="current-price">${priceRaw}</span>
@@ -86,6 +93,9 @@ document.addEventListener('DOMContentLoaded', function () {
           <button class="add-btn">ADD</button>
         `;
       } else {
+        // If still positive, just update the text
+        saveCart();
+        updateCartBadge();
         e.target.parentElement.querySelector('.qty-value').textContent = cart[name].qty;
       }
     }
@@ -97,12 +107,17 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.product-card').forEach(card => {
     const name = card.querySelector('.product-name').textContent;
     const priceEl = card.querySelector('.current-price');
+    
+    // 🔥 FIX: Capture original price on load too
+    const originalPriceEl = card.querySelector('.original-price');
+    const originalPriceHTML = originalPriceEl ? originalPriceEl.outerHTML : '';
 
     if (cart[name]) {
       const pricing = card.querySelector('.product-pricing');
       pricing.innerHTML = `
         <div class="price-stack">
           <span class="current-price">${priceEl.textContent}</span>
+          ${originalPriceHTML}
         </div>
         <div class="qty-control">
           <button class="qty-btn minus">−</button>
