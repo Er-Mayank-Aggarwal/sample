@@ -262,37 +262,50 @@
   <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
   <script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>
 
-  <script>
-    // 1. Open the Menu (Catalog)
+ <script>
+    // State variable to track if we are inside a product page
+    let isProductView = false;
+
+    // 1. Open Menu (Catalog)
     function openCatalog() { 
+        isProductView = false; // We are in the Menu list now
+
         const content = document.querySelector('.catalog-content');
         
-        // Allow container scrolling for the menu grid
-        content.style.overflowY = 'auto'; 
-
-        // Show internal Catalog Header
+        // Show Headers
+        document.querySelector('.app-header').style.display = 'flex';
         document.querySelector('.catalog-header').style.display = 'flex';
         
-        // Ensure Main App Header is visible
-        document.querySelector('.app-header').style.display = 'flex';
+        // Reset Drawer to 90%
+        const drawer = document.getElementById('catalog-drawer');
+        drawer.style.height = '90%';
+        drawer.style.borderRadius = '25px 25px 0 0';
 
-        content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none; display:block;"></iframe>';
-        
-        document.getElementById('catalog-drawer').classList.add('open'); 
+        content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none;"></iframe>';
+        drawer.classList.add('open'); 
         document.getElementById('swipe-trigger').style.display = 'none'; 
     }
 
-    // 2. Close everything (Back to Video)
+    // 2. Close Logic (The "Smart" Back Button)
     function closeCatalog() { 
-        document.getElementById('catalog-drawer').classList.remove('open'); 
-        document.getElementById('swipe-trigger').style.display = 'flex'; 
-        
-        setTimeout(() => {
-            document.querySelector('.catalog-content').innerHTML = '';
-        }, 400);
+        if (isProductView) {
+            // If product is open, GO BACK TO MENU
+            openCatalog();
+        } else {
+            // If menu is open, CLOSE DRAWER
+            document.getElementById('catalog-drawer').classList.remove('open'); 
+            document.getElementById('swipe-trigger').style.display = 'flex'; 
+            
+            // Show Main Header again
+            document.querySelector('.app-header').style.display = 'flex';
+            
+            setTimeout(() => {
+                document.querySelector('.catalog-content').innerHTML = '';
+            }, 400);
+        }
     }
 
-    // 3. Open Cart (90% Height, Hidden Menu Header)
+    // 3. Open Cart
     function openCart() {
         const content = document.querySelector('.catalog-content');
         
@@ -314,6 +327,31 @@
         drawer.classList.add('open');
     }
 
+    // 4. Open Product Page (90% Drawer)
+    function openProduct() {
+        isProductView = true; // Mark that we are viewing a product
+
+        const content = document.querySelector('.catalog-content');
+        
+        // Keep headers visible (since it's a 90% popup)
+        document.querySelector('.app-header').style.display = 'flex';
+        document.querySelector('.catalog-header').style.display = 'flex';
+
+        // Set Drawer to 90%
+        const drawer = document.getElementById('catalog-drawer');
+        drawer.style.height = '90%';
+        drawer.style.borderRadius = '25px 25px 0 0';
+
+        content.innerHTML = '<iframe src="product.html" style="width:100%; height:100%; border:none;"></iframe>';
+        drawer.classList.add('open');
+    }
+
+    // 5. Helper function for product.html internal back button
+    function closeProduct() {
+        openCatalog();
+    }
+    
+    // 6. Helper for cart.html back button
     function closeCart() {
         openCatalog();
     }

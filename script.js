@@ -177,6 +177,42 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   });
+  /* ================================
+     OPEN PRODUCT DETAIL PAGE
+  ================================ */
+  document.addEventListener('click', function(e) {
+      // 1. Find the clicked card
+      const card = e.target.closest('.product-card');
+      if (!card) return;
 
+      // 2. IGNORE clicks on buttons (Add, Plus, Minus, Qty controls)
+      if (e.target.closest('.add-btn') || 
+          e.target.closest('.qty-control') || 
+          e.target.closest('.qty-btn')) {
+          return;
+      }
+
+      // 3. Gather Product Data
+      const name = card.querySelector('.product-name').textContent;
+      const priceRaw = card.querySelector('.current-price').textContent;
+      const price = parseFloat(priceRaw.replace(/[^\d.]/g, ''));
+      const imageSrc = card.querySelector('.product-image').src;
+
+      const productData = {
+          name: name,
+          price: price,
+          image: imageSrc
+      };
+
+      // 4. Save to LocalStorage so product.html can read it
+      localStorage.setItem('selectedProduct', JSON.stringify(productData));
+
+      // 5. Trigger Parent Function to Open Page
+      try {
+          window.parent.openProduct();
+      } catch (err) {
+          console.error("Could not open product page via parent", err);
+      }
+  });
   updateCartBadge();
 });
