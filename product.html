@@ -230,25 +230,28 @@
     </div>
 
     <script>
-        // Load Data on Startup
+        // 1. Load Data on Startup
         const product = JSON.parse(localStorage.getItem('selectedProduct'));
-        const cart = JSON.parse(localStorage.getItem('cart')) || {};
+        let cart = JSON.parse(localStorage.getItem('cart')) || {};
 
+        // 2. Populate Page with Data
         if(product) {
             document.getElementById('p-name').textContent = product.name;
             document.getElementById('p-price').textContent = '₹' + product.price;
+            // Calculate a fake MRP (20% higher) for display
             document.getElementById('p-mrp').textContent = '₹' + (product.price * 1.2).toFixed(2);
             
-            // SETUP CAROUSEL (We use the same image 3 times to mimic a gallery since we only have 1 source)
+            // SETUP CAROUSEL (Injecting the same image 3 times for demo)
             const track = document.getElementById('track');
-            const imgUrl = product.image;
+            const imgUrl = product.image || 'fallback.jpeg'; // Fallback if image is missing
             
-            // Inject 3 slides
             track.innerHTML = `
                 <div class="carousel-item"><img src="${imgUrl}" class="main-img"></div>
                 <div class="carousel-item"><img src="${imgUrl}" class="main-img" style="filter: hue-rotate(15deg);"></div>
                 <div class="carousel-item"><img src="${imgUrl}" class="main-img" style="filter: hue-rotate(-15deg);"></div>
             `;
+        } else {
+            console.error("No product data found in LocalStorage");
         }
 
         /* ================================
@@ -257,16 +260,16 @@
         const track = document.getElementById('track');
         const dots = document.querySelectorAll('.dot');
         
-        track.addEventListener('scroll', () => {
-            const width = track.offsetWidth;
-            const scrollPos = track.scrollLeft;
-            
-            // Calculate which slide index (0, 1, or 2) is currently visible
-            const index = Math.round(scrollPos / width);
-            
-            dots.forEach(d => d.classList.remove('active'));
-            if(dots[index]) dots[index].classList.add('active');
-        });
+        if(track) {
+            track.addEventListener('scroll', () => {
+                const width = track.offsetWidth;
+                const scrollPos = track.scrollLeft;
+                const index = Math.round(scrollPos / width);
+                
+                dots.forEach(d => d.classList.remove('active'));
+                if(dots[index]) dots[index].classList.add('active');
+            });
+        }
 
         /* ================================
            SHARE FUNCTION
@@ -276,51 +279,70 @@
                 try {
                     await navigator.share({
                         title: product ? product.name : 'Jars n More',
-                        text: 'Check out this fresh item from Jars n More!',
+                        text: 'Check out this item from Jars n More!',
                         url: window.location.href
                     });
-                } catch (err) {
-                    console.log('Share canceled', err);
-                }
+                } catch (err) { console.log('Share canceled', err); }
             } else {
-                // Fallback for browsers that don't support native share
-                alert('URL copied to clipboard!');
-                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
             }
         }
 
         /* ================================
-           CART LOGIC
+           ADD TO CART LOGIC (FIXED)
         ================================ */
-        // Update Badge Initial
+        // Initialize Badge
         const count = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
-        document.querySelector('.cart-badge').textContent = count;
+        const badge = document.querySelector('.cart-badge');
+        if(badge) badge.textContent = count;
 
         function addToCartFromPage() {
-            if(!product) return;
-            
-            if(cart[product.name]) {
-                cart[product.name].qty++;
-            } else {
-                cart[product.name] = { price: product.price, qty: 1 };
+            // Safety Check
+            if(!product) {
+                alert("Error: Product data not loaded. Please go back to the menu.");
+                return;
             }
             
+            // Refresh Cart (in case it changed in another tab)
+            cart = JSON.parse(localStorage.getItem('cart')) || {};
+
+            // Add or Increment Item
+            if(cart[product.name]) {
+                cart[product.name].qty++;
+                // Ensure image is updated if missing
+                if(!cart[product.name].img) cart[product.name].img = product.image;
+            } else {
+                // 🔥 CRITICAL FIX: Save the 'img' property here!
+                cart[product.name] = { 
+                    price: product.price, 
+                    qty: 1, 
+                    img: product.image 
+                };
+            }
+            
+            // Save to Storage
             localStorage.setItem('cart', JSON.stringify(cart));
             
+            // Update Local Badge
             const newCount = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
-            document.querySelector('.cart-badge').textContent = newCount;
+            if(badge) badge.textContent = newCount;
             
-            // Update Parent
-            try { window.parent.document.querySelector('.cart-badge').textContent = newCount; } catch(e){}
+            // Update Parent Badge (Index.html)
+            try { 
+                window.parent.document.querySelector('.cart-badge').textContent = newCount; 
+            } catch(e) { 
+                console.log("Could not update parent badge"); 
+            }
 
-            // Button Feedback
+            // Visual Feedback (Button Animation)
             const btn = document.querySelector('.add-btn-lg');
             const originalText = btn.textContent;
             btn.textContent = "ADDED ✓";
-            btn.style.background = "#2e7d32";
+            btn.style.backgroundColor = "#2e7d32"; // Green
+            
             setTimeout(() => {
                 btn.textContent = originalText;
-                btn.style.background = "#4280FD";
+                btn.style.backgroundColor = "#4280FD"; // Back to Blue
             }, 1000);
         }
     </script>
