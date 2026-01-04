@@ -243,6 +243,14 @@ body {
     width: 100%;
   }
 }
+
+.back-btn-catalog{
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
 /* ================================
    LIST VIEW – IMAGE MATCH FIX
 ================================ */

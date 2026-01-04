@@ -3,53 +3,25 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ================================
      STATE
   ================================= */
-  let cartCount = 0;
+  let cart = JSON.parse(localStorage.getItem("cart")) || {};
   let isList = false;
 
-  /* ================================
-     CATEGORY FILTER
-  ================================= */
-  const filterButtons = document.querySelectorAll('.filter-btn');
-  const categorySections = document.querySelectorAll('.category-section');
+  function saveCart() {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }
 
-  filterButtons.forEach(btn => {
-    btn.addEventListener('click', function () {
+  function getCartCount() {
+    return Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
+  }
 
-      filterButtons.forEach(b => b.classList.remove('filter-active'));
-      this.classList.add('filter-active');
-
-      const filter = this.textContent.toLowerCase();
-
-      categorySections.forEach(section => {
-        const title = section
-          .querySelector('.category-title')
-          .textContent
-          .toLowerCase();
-
-        if (filter === 'all' || title.includes(filter)) {
-          section.style.display = 'block';
-
-          section.querySelectorAll('.products-grid')
-            .forEach(grid => grid.classList.toggle('list-view', isList));
-
-        } else {
-          section.style.display = 'none';
-        }
-      });
-    });
-  });
-
-  /* ================================
-     CART COUNT
-  ================================= */
   function updateCartBadge() {
+    const count = getCartCount();
     const badge = document.querySelector('.cart-badge');
-    if (badge) badge.textContent = cartCount;
-
+    if (badge) badge.textContent = count;
     try {
       if (window.parent !== window) {
         const parentBadge = window.parent.document.querySelector('.cart-badge');
-        if (parentBadge) parentBadge.textContent = cartCount;
+        if (parentBadge) parentBadge.textContent = count;
       }
     } catch (e) {}
   }
@@ -58,99 +30,138 @@ document.addEventListener('DOMContentLoaded', function () {
      ADD / QTY CONTROL
   ================================= */
   document.addEventListener('click', function (e) {
+    const card = e.target.closest('.product-card');
+    if (!card) return;
 
+    const name = card.querySelector('.product-name').textContent;
+    // Get Price (Numbers only)
+    const priceRaw = card.querySelector('.current-price').textContent;
+    const price = parseFloat(priceRaw.replace(/[^\d.]/g, ''));
+    
+    // 🔥 NEW: Get Image Source
+    const imgEl = card.querySelector('.product-image');
+    const imgSrc = imgEl ? imgEl.src : ''; 
+
+    /* ADD BUTTON CLICK */
     if (e.target.classList.contains('add-btn')) {
+      // Save Image to Cart Object
+      cart[name] = { price, qty: 1, img: imgSrc };
+      
+      saveCart();
+      updateCartBadge();
+
       const pricing = e.target.closest('.product-pricing');
-      cartCount++;
-      updateCartBadge();
-
-      const qtyBox = document.createElement('div');
-      qtyBox.className = 'qty-control';
-      qtyBox.innerHTML = `
-        <button class="qty-btn minus">−</button>
-        <span class="qty-value">1</span>
-        <button class="qty-btn plus">+</button>
+      pricing.innerHTML = `
+        <div class="price-stack">
+          <span class="current-price">${priceRaw}</span>
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn minus">−</button>
+          <span class="qty-value">1</span>
+          <button class="qty-btn plus">+</button>
+        </div>
       `;
-
-      pricing.replaceChild(qtyBox, e.target);
     }
 
+    /* PLUS CLICK */
     if (e.target.classList.contains('plus')) {
-      const value = e.target.parentElement.querySelector('.qty-value');
-      value.textContent = +value.textContent + 1;
-      cartCount++;
+      cart[name].qty++;
+      saveCart();
       updateCartBadge();
+      e.target.parentElement.querySelector('.qty-value').textContent = cart[name].qty;
     }
 
+    /* MINUS CLICK */
     if (e.target.classList.contains('minus')) {
-      const qtyBox = e.target.parentElement;
-      const pricing = qtyBox.closest('.product-pricing');
-      const value = qtyBox.querySelector('.qty-value');
-
-      let qty = +value.textContent - 1;
-      cartCount--;
+      cart[name].qty--;
+      saveCart();
       updateCartBadge();
 
-      if (qty === 0) {
-        const addBtn = document.createElement('button');
-        addBtn.className = 'add-btn';
-        addBtn.textContent = 'ADD';
-        pricing.replaceChild(addBtn, qtyBox);
+      if (cart[name].qty === 0) {
+        delete cart[name];
+        e.target.closest('.product-pricing').innerHTML = `
+          <div class="price-stack">
+            <span class="current-price">${priceRaw}</span>
+          </div>
+          <button class="add-btn">ADD</button>
+        `;
       } else {
-        value.textContent = qty;
+        e.target.parentElement.querySelector('.qty-value').textContent = cart[name].qty;
       }
     }
   });
 
   /* ================================
-   SEARCH (VIEW SAFE)
-================================ */
-const searchInput = document.querySelector('.search-input');
-const productCards = document.querySelectorAll('.product-card');
+     INIT STATE (Restore UI)
+  ================================= */
+  document.querySelectorAll('.product-card').forEach(card => {
+    const name = card.querySelector('.product-name').textContent;
+    const priceEl = card.querySelector('.current-price');
 
-if (searchInput) {
-  searchInput.addEventListener('input', function () {
-    const term = this.value.toLowerCase();
-
-    productCards.forEach(card => {
-      const name = card
-        .querySelector('.product-name')
-        .textContent
-        .toLowerCase();
-
-      if (name.includes(term)) {
-        card.style.display = ''; // let CSS decide layout
-      } else {
-        card.style.display = 'none';
-      }
-
-      // 🔥 RE-APPLY LIST/GRID STATE
-      const grid = card.closest('.products-grid');
-      if (grid) {
-        grid.classList.toggle('list-view', isList);
-      }
-    });
+    if (cart[name]) {
+      const pricing = card.querySelector('.product-pricing');
+      pricing.innerHTML = `
+        <div class="price-stack">
+          <span class="current-price">${priceEl.textContent}</span>
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn minus">−</button>
+          <span class="qty-value">${cart[name].qty}</span>
+          <button class="qty-btn plus">+</button>
+        </div>
+      `;
+    }
   });
-}
 
   /* ================================
-     GRID ↔ LIST TOGGLE
+     SEARCH & FILTER
   ================================= */
-  const gridBtn = document.querySelector('.grid-view-btn');
-  const grids = document.querySelectorAll('.products-grid');
+  const searchInput = document.querySelector('.search-input');
+  const productCards = document.querySelectorAll('.product-card');
 
-  if (gridBtn) {
-    gridBtn.addEventListener('click', () => {
-      isList = !isList;
-
-      grids.forEach(grid =>
-        grid.classList.toggle('list-view', isList)
-      );
-
-      gridBtn.innerHTML = isList
-        ? '<i class="fas fa-th-large"></i>'
-        : '<i class="fas fa-list"></i>';
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      const term = this.value.toLowerCase();
+      productCards.forEach(card => {
+        const name = card.querySelector('.product-name').textContent.toLowerCase();
+        const displayStyle = name.includes(term) ? '' : 'none';
+        card.style.display = displayStyle;
+        if (displayStyle !== 'none' && isList) {
+             card.closest('.products-grid').classList.add('list-view');
+        }
+      });
     });
   }
 
+  const gridBtn = document.querySelector('.grid-view-btn');
+  const grids = document.querySelectorAll('.products-grid');
+  if (gridBtn) {
+    gridBtn.addEventListener('click', () => {
+      isList = !isList;
+      grids.forEach(grid => grid.classList.toggle('list-view', isList));
+      gridBtn.innerHTML = isList ? '<i class="fas fa-th-large"></i>' : '<i class="fas fa-list"></i>';
+    });
+  }
+
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const categorySections = document.querySelectorAll('.category-section');
+  
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', function () {
+      filterButtons.forEach(b => b.classList.remove('filter-active'));
+      this.classList.add('filter-active');
+      const filter = this.textContent.toLowerCase();
+
+      categorySections.forEach(section => {
+        const title = section.querySelector('.category-title').textContent.toLowerCase();
+        if (filter === 'all' || title.includes(filter)) {
+          section.style.display = 'block';
+        } else {
+          section.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  updateCartBadge();
 });

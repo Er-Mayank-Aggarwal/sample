@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Cart</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-blue: #4280FD;
+            --text-grey: #474747;
+            --bg-light: #f3f3f5;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Baloo 2', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-grey);
+            padding-bottom: 90px;
+        }
+
+        /* HEADER - Notch Safe */
+        .cart-header {
+            background: #fff;
+            padding-top: max(16px, env(safe-area-inset-top)); 
+            padding-bottom: 16px;
+            padding-left: 16px; 
+            padding-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .back-btn-catalog { background: none; border: none; cursor: pointer; padding: 5px; }
+        .clear-cart { background: none; border: none; color: #e53935; font-weight: 700; font-size: 12px; cursor: pointer; letter-spacing: 0.5px; }
+
+        /* STORE CARD */
+        .cart-store {
+            background: #fff;
+            margin: 16px;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            position: relative;
+            z-index: 10;
+        }
+
+        .store-header { margin-bottom: 12px; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; }
+        .store-name { font-weight: 800; font-size: 16px; }
+        .store-items { font-size: 12px; color: #999; font-weight: 600; }
+
+        /* CART ITEM - WITH IMAGE */
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .cart-item:last-child { border-bottom: none; }
+
+        /* 🔥 NEW IMAGE STYLE */
+        .cart-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #eee;
+            margin-right: 12px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .cart-item-info { flex: 1; padding-right: 8px; }
+        .cart-item-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; line-height: 1.2; }
+        .cart-item-price { font-size: 13px; color: #666; }
+
+        /* QTY CONTROLS */
+        .qty-box {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--primary-blue);
+            border-radius: 8px;
+            padding: 2px 6px;
+            gap: 10px;
+            background: #fcfcfc;
+            height: 32px;
+        }
+
+        .qty-box button { background: none; border: none; font-size: 16px; color: var(--primary-blue); cursor: pointer; padding: 0; line-height: 1; }
+        .qty-value { font-size: 14px; font-weight: 700; min-width: 10px; text-align: center; }
+
+        .remove-btn { margin-left: 12px; color: #ff4d4f; cursor: pointer; padding: 4px; font-size: 14px; }
+
+        /* FOOTER */
+        .cart-footer {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #ffffff;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+            z-index: 200;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+        }
+
+        .total-price { font-size: 20px; font-weight: 800; color: var(--text-grey); }
+        .total-label { font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700; }
+
+        .checkout-btn {
+            background: var(--primary-blue); color: #fff; border: none;
+            padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 14px;
+            box-shadow: 0 4px 12px rgba(66, 128, 253, 0.3); cursor: pointer;
+        }
+
+        /* BACKGROUND ART */
+        .cart-bg-art {
+            position: fixed; top: 65%; right: -15px; width: 180px;
+            transform: translateY(-50%) rotate(10deg);
+            opacity: 0.8; pointer-events: none; z-index: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <img class="cart-bg-art" src="cartoon.png" alt="Background">
+
+    <div class="cart-header">
+        <button class="back-btn-catalog" onclick="window.parent.closeCart()">
+          <i class="fas fa-arrow-left" style="font-size: 20px; color: #474747;"></i>
+        </button>
+        <button class="clear-cart">CLEAR CART</button>
+    </div>
+
+    <div class="cart-store">
+        <div class="store-header">
+            <div class="store-name">Jars n' More</div>
+            <div class="store-items"><span id="store-item-count">0</span> ITEMS</div>
+        </div>
+        <div id="cart-items"></div>
+    </div>
+
+    <div class="cart-footer">
+        <div class="cart-summary">
+            <div class="total-label">Total</div>
+            <div class="total-price">₹<span id="total-price">0</span></div>
+        </div>
+        <button class="checkout-btn">CHECKOUT</button>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem("cart")) || {};
+
+        function saveCart() { localStorage.setItem("cart", JSON.stringify(cart)); }
+
+        function renderCart() {
+            const cartItems = document.getElementById("cart-items");
+            cartItems.innerHTML = "";
+            let totalQty = 0;
+            let totalPrice = 0;
+
+            if (Object.keys(cart).length === 0) {
+                cartItems.innerHTML = `<div style="text-align:center; padding: 30px; color:#999; font-size: 14px;">Your cart is empty</div>`;
+                document.querySelector('.checkout-btn').style.opacity = '0.5';
+                document.querySelector('.checkout-btn').style.pointerEvents = 'none';
+            } else {
+                document.querySelector('.checkout-btn').style.opacity = '1';
+                document.querySelector('.checkout-btn').style.pointerEvents = 'auto';
+            }
+
+            Object.entries(cart).forEach(([name, item]) => {
+                totalQty += item.qty;
+                totalPrice += item.qty * item.price;
+                
+                // 🔥 NEW: Check for image, use generic icon if missing
+                const imgDisplay = item.img ? 
+                    `<img src="${item.img}" class="cart-thumb">` : 
+                    `<div class="cart-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="color:#ccc;"></i></div>`;
+
+                cartItems.innerHTML += `
+                  <div class="cart-item">
+                    ${imgDisplay}
+                    <div class="cart-item-info">
+                      <div class="cart-item-name">${name}</div>
+                      <div class="cart-item-price">₹${item.price} × ${item.qty}</div>
+                    </div>
+                    <div class="qty-box">
+                      <button onclick="updateQty('${name}', -1)">−</button>
+                      <span class="qty-value">${item.qty}</span>
+                      <button onclick="updateQty('${name}', 1)">+</button>
+                    </div>
+                    <div class="remove-btn" onclick="removeItem('${name}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                  </div>
+                `;
+            });
+
+            document.getElementById("store-item-count").textContent = totalQty;
+            document.getElementById("total-price").textContent = totalPrice.toFixed(2);
+            
+            try {
+                if (window.parent) {
+                    const parentBadge = window.parent.document.querySelector('.cart-badge');
+                    if (parentBadge) parentBadge.textContent = totalQty;
+                }
+            } catch (e) {}
+        }
+
+        function updateQty(name, delta) {
+            if (cart[name]) {
+                cart[name].qty += delta;
+                if (cart[name].qty <= 0) delete cart[name];
+                saveCart();
+                renderCart();
+            }
+        }
+
+        function removeItem(name) {
+            delete cart[name];
+            saveCart();
+            renderCart();
+        }
+
+        document.querySelector(".clear-cart").onclick = () => {
+            if(confirm('Clear entire cart?')) {
+                cart = {};
+                saveCart();
+                renderCart();
+            }
+        };
+
+        renderCart();
+    </script>
+</body>
+</html>

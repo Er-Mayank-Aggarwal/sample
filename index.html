@@ -1,203 +1,309 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Jars n' More - Listerr Edition</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <style>
-      :root {
-        --listerr-blue: #4280FD; 
-        --listerr-grey: #474747;
-        --light-bg: #f5f7fa;
-      }
+<head>
+  <meta charset="utf-8">
+  <title>Jars n' More - Listerr Edition</title>
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
-      html { 
-        height: 100%; 
-        overflow: hidden;
-      }
-      
-      body { 
-        font-family: 'Baloo 2', sans-serif; 
-        background-color: #111; margin: 0; padding: 0;
-        position: fixed; 
-        top: 0; left: 0; right: 0; bottom: 0;
-        height: 100dvh;
-        width: 100vw;
-        display: flex; justify-content: center; align-items: center;
-      }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <style>
+    :root {
+      --listerr-blue: #4280FD;
+      --listerr-grey: #474747;
+      --light-bg: #f5f7fa;
+    }
+
+    html {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Baloo 2', sans-serif;
+      background-color: #111;
+      margin: 0;
+      padding: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100dvh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #mobile-container {
+      width: 100%;
+      height: 100%;
+      background: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 500px) {
       #mobile-container {
-        width: 100%; 
-        height: 100%;
-        background: white; 
-        position: relative; 
-        overflow: hidden;
+        width: 390px;
+        height: 844px;
+        max-height: 90vh;
+        border-radius: 40px;
+        border: 10px solid #222;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
       }
-      
-      @media (min-width: 500px) {
-        #mobile-container { 
-          width: 390px; height: 844px; max-height: 90vh; 
-          border-radius: 40px; border: 10px solid #222; 
-          box-shadow: 0 0 60px rgba(0,0,0,0.6); 
-        }
-      }
+    }
 
-      .app-header {
-        position: absolute; top: 0; left: 0; width: 100%;
-        padding-top: max(15px, env(safe-area-inset-top)); 
-        padding-left: 20px; padding-right: 20px;
-        z-index: 2000; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none;
-      }
-      
-      .header-logo { 
-        font-weight: 800; font-size: 26px; color: white; 
-        text-shadow: 0 2px 8px rgba(0,0,0,0.6); margin-top: 0px; pointer-events: auto; 
-      }
+    .app-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding-top: max(15px, env(safe-area-inset-top));
+      padding-left: 20px;
+      padding-right: 20px;
+      z-index: 2000;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
 
-      .swipe-cta-container {
-        position: absolute; bottom: 0; left: 0; width: 100%; height: 160px; z-index: 1500;
-        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
-        display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-        padding-bottom: max(30px, env(safe-area-inset-bottom)); 
-        cursor: pointer;
-      }
-      
-      .swipe-arrow { width: 40px; height: 5px; background: rgba(255,255,255,0.9); border-radius: 5px; margin-bottom: 10px; }
-      .swipe-text { color: white; font-weight: bold; font-size: 16px; letter-spacing: 0.5px; text-transform: uppercase; animation: bounce 2s infinite; }
-      @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-10px);} 60% {transform: translateY(-5px);} }
+    .header-logo {
+      font-weight: 800;
+      font-size: 26px;
+      color: white;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      margin-top: 0px;
+      pointer-events: auto;
+    }
 
-      #catalog-drawer {
-        position: absolute; bottom: -100%; left: 0; width: 100%; height: 90%; 
-        background: #f9f9f9; z-index: 3000; transition: bottom 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
-        border-radius: 25px 25px 0 0; display: flex; flex-direction: column;
-        box-shadow: 0 -10px 50px rgba(0,0,0,0.3);
-      }
-      
-      #catalog-drawer.open { bottom: 0; }
-      
-      .catalog-header { 
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px;
-        background-color: #FFFFFF;
-        border-bottom: 1px solid #eee;
-        border-radius: 25px 25px 0 0;
-        font-weight: 800; 
-        font-size: 18px; 
-        color: var(--listerr-grey);
-        flex-shrink: 0; 
-      }
+    .swipe-cta-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 160px;
+      z-index: 1500;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: max(30px, env(safe-area-inset-bottom));
+      cursor: pointer;
+    }
 
-      .catalog-title {
-        font-size: 18px;
-        font-weight: 800;
-        color: #474747;
-        margin: 0;
-      }
+    .swipe-arrow {
+      width: 40px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
 
-      .back-btn-catalog, .cart-btn-catalog {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        display: flex;
-        align-items: center;
+    .swipe-text {
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      20%,
+      50%,
+      80%,
+      100% {
+        transform: translateY(0);
       }
 
-      .cart-container-catalog {
-        position: relative;
-        cursor: pointer;
+      40% {
+        transform: translateY(-10px);
       }
 
-      .cart-badge {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        width: 15px;
-        height: 15px;
-        background-color: #4280FD;
-        color: #FFFFFF;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: 50;
+      60% {
+        transform: translateY(-5px);
       }
-            
-      .catalog-content { 
-        flex-grow: 1; 
-        overflow-y: auto; 
-        padding: 0; 
-        -webkit-overflow-scrolling: touch; 
-      }
-    </style>
-  </head>
+    }
 
-  <body>
-    <div id="mobile-container">
+    #catalog-drawer {
+      position: absolute;
+      bottom: -100%;
+      left: 0;
+      width: 100%;
+      height: 90%;
+      background: #f9f9f9;
+      z-index: 3000;
+      transition: bottom 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+      border-radius: 25px 25px 0 0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -10px 50px rgba(0, 0, 0, 0.3);
+    }
 
-        <div class="app-header">
-            <div class="header-logo">Jars n' More</div>
-        </div>
+    #catalog-drawer.open {
+      bottom: 0;
+    }
 
-        <div class="swipe-cta-container" id="swipe-trigger" onclick="openCatalog()">
-            <div class="swipe-arrow"></div>
-            <div class="swipe-text">View Menu</div>
-        </div>
+    .catalog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background-color: #FFFFFF;
+      border-bottom: 1px solid #eee;
+      border-radius: 25px 25px 0 0;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--listerr-grey);
+      flex-shrink: 0;
+    }
 
-        <amp-story standalone title="Jars n' More" publisher="Jars n' More" poster-portrait-src="https://cdn.suvichaar.org/upload/jarsnmore/jarnmore.jpg">
-            <amp-story-page id="page1">
-                <amp-story-grid-layer template="fill">
-                    <amp-video id="amp-video-el" layout="fill" poster="https://cdn.suvichaar.org/upload/jarsnmore/jarnmore.jpg" autoplay loop>
-                        <source src="https://cdn.suvichaar.org/upload/jarsnmore/Jar.mp4" type="video/mp4">
-                    </amp-video>
-                </amp-story-grid-layer>
-            </amp-story-page>
-        </amp-story>
+    .catalog-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #474747;
+      margin: 0;
+    }
 
-        <div id="catalog-drawer">
-            <div class="catalog-header">
-              <button class="back-btn-catalog" onclick="closeCatalog()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#3C4043"/>
-                </svg>
-              </button>
-              <h1 class="catalog-title">Our Menu</h1>
-              <div class="cart-container-catalog">
-                <i class="fas fa-shopping-bag" style="font-size: 20px; color: #474747;"></i>
-                <div class="cart-badge">0</div>
-              </div>
-            </div>
-            <div class="catalog-content"></div>
-        </div>
+    .back-btn-catalog,
+    .cart-btn-catalog {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+    }
 
+    .cart-container-catalog {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 15px;
+      height: 15px;
+      background-color: #4280FD;
+      color: #FFFFFF;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 50;
+    }
+
+    .catalog-content {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mobile-container">
+
+    <div class="app-header">
+      <div class="header-logo">Jars n' More</div>
     </div>
 
-    <script src="https://cdn.ampproject.org/v0.js" async></script>
-    <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
-    <script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>
+    <div class="swipe-cta-container" id="swipe-trigger" onclick="openCatalog()">
+      <div class="swipe-arrow"></div>
+      <div class="swipe-text">View Menu</div>
+    </div>
 
-    <script>
-        function openCatalog() { 
-            const content = document.querySelector('.catalog-content');
-            content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none;"></iframe>';
-            document.getElementById('catalog-drawer').classList.add('open'); 
-            document.getElementById('swipe-trigger').style.display = 'none'; 
-        }
+    <amp-story standalone title="Jars n' More" publisher="Jars n' More"
+      poster-portrait-src="https://cdn.suvichaar.org/upload/jarsnmore/jarnmore.jpg">
+      <amp-story-page id="page1">
+        <amp-story-grid-layer template="fill">
+          <amp-video id="amp-video-el" layout="fill" poster="https://cdn.suvichaar.org/upload/jarsnmore/jarnmore.jpg"
+            autoplay loop>
+            <source src="https://cdn.suvichaar.org/upload/jarsnmore/Jar.mp4" type="video/mp4">
+          </amp-video>
+        </amp-story-grid-layer>
+      </amp-story-page>
+    </amp-story>
 
-        function closeCatalog() { 
-            document.getElementById('catalog-drawer').classList.remove('open'); 
-            document.getElementById('swipe-trigger').style.display = 'flex'; 
-            document.querySelector('.catalog-content').innerHTML = '';
-        }
-    </script>
-  </body>
+    <div id="catalog-drawer">
+      <div class="catalog-header">
+        <button class="back-btn-catalog" onclick="closeCatalog()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#3C4043" />
+          </svg>
+        </button>
+        <h1 class="catalog-title">Our Menu</h1>
+        <div class="cart-container-catalog" onclick="openCart()">
+          <i class="fas fa-shopping-bag" style="font-size: 20px; color: #474747;"></i>
+          <div class="cart-badge">0</div>
+        </div>
+      </div>
+      <div class="catalog-content"></div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.ampproject.org/v0.js" async></script>
+  <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
+  <script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>
+
+  <script>
+    // 1. Open the Catalog (Menu)
+    function openCatalog() {
+      const content = document.querySelector('.catalog-content');
+      const header = document.querySelector('.catalog-header'); // Select by Class
+
+      // Ensure header is visible (in case it was hidden by cart)
+      header.style.display = 'flex';
+
+      content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none;"></iframe>';
+      document.getElementById('catalog-drawer').classList.add('open');
+      document.getElementById('swipe-trigger').style.display = 'none';
+    }
+
+    // 2. Close everything
+    function closeCatalog() {
+      document.getElementById('catalog-drawer').classList.remove('open');
+      document.getElementById('swipe-trigger').style.display = 'flex';
+      document.querySelector('.catalog-content').innerHTML = '';
+
+      // Reset header display just to be safe
+      document.querySelector('.catalog-header').style.display = 'flex';
+    }
+
+    // 3. Open Cart
+    function openCart() {
+      const content = document.querySelector('.catalog-content');
+
+      // Fix: Use querySelector because '.catalog-header' is a class, not an ID
+      document.querySelector('.catalog-header').style.display = 'none';
+
+      content.innerHTML = '<iframe src="cart.html" style="width:100%; height:100%; border:none; border-radius: 25px 25px 0 0;"></iframe>';
+      document.getElementById('catalog-drawer').classList.add('open');
+    }
+
+    function closeCart() {
+        // Simply calling openCatalog() resets the view to the menu
+        // and makes the header visible again via the logic in function #1
+        openCatalog();
+    }
+  </script>
+
+</body>
+
 </html>
