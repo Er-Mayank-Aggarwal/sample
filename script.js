@@ -58,7 +58,8 @@ document.addEventListener('DOMContentLoaded', function () {
       pricing.innerHTML = `
         <div class="price-stack">
           <span class="current-price">${priceRaw}</span>
-          ${originalPriceHTML} </div>
+          ${originalPriceHTML} 
+        </div>
         <div class="qty-control">
           <button class="qty-btn minus">−</button>
           <span class="qty-value">1</span>
@@ -77,23 +78,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* MINUS CLICK */
     if (e.target.classList.contains('minus')) {
-      cart[name].qty--; // Decrease quantity first
+      cart[name].qty--; 
       
-      // FIX: Check if 0 OR LESS (handles negative glitches)
       if (cart[name].qty <= 0) {
         delete cart[name];
         saveCart();
         updateCartBadge();
 
-        // Revert to "ADD" button
+        // 🔥 FIX: When reverting to "ADD", put the Original Price back too!
         e.target.closest('.product-pricing').innerHTML = `
           <div class="price-stack">
             <span class="current-price">${priceRaw}</span>
+            ${originalPriceHTML}
           </div>
           <button class="add-btn">ADD</button>
         `;
       } else {
-        // If still positive, just update the text
         saveCart();
         updateCartBadge();
         e.target.parentElement.querySelector('.qty-value').textContent = cart[name].qty;
@@ -177,22 +177,20 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   });
+
   /* ================================
      OPEN PRODUCT DETAIL PAGE
   ================================ */
   document.addEventListener('click', function(e) {
-      // 1. Find the clicked card
       const card = e.target.closest('.product-card');
       if (!card) return;
 
-      // 2. IGNORE clicks on buttons (Add, Plus, Minus, Qty controls)
       if (e.target.closest('.add-btn') || 
           e.target.closest('.qty-control') || 
           e.target.closest('.qty-btn')) {
           return;
       }
 
-      // 3. Gather Product Data
       const name = card.querySelector('.product-name').textContent;
       const priceRaw = card.querySelector('.current-price').textContent;
       const price = parseFloat(priceRaw.replace(/[^\d.]/g, ''));
@@ -204,15 +202,14 @@ document.addEventListener('DOMContentLoaded', function () {
           image: imageSrc
       };
 
-      // 4. Save to LocalStorage so product.html can read it
       localStorage.setItem('selectedProduct', JSON.stringify(productData));
 
-      // 5. Trigger Parent Function to Open Page
       try {
           window.parent.openProduct();
       } catch (err) {
           console.error("Could not open product page via parent", err);
       }
   });
+
   updateCartBadge();
 });
