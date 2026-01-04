@@ -12,22 +12,23 @@
             --text-grey: #474747;
             --bg-light: #f3f3f5;
         }
-
         body {
             margin: 0;
             font-family: 'Baloo 2', sans-serif;
             background: var(--bg-light);
             color: var(--text-grey);
             padding-bottom: 90px;
+            overflow-x: hidden;
         }
 
         /* HEADER - Notch Safe */
+        /* HEADER */
         .cart-header {
             background: #fff;
-            padding-top: max(16px, env(safe-area-inset-top)); 
-            padding-bottom: 16px;
-            padding-left: 16px; 
-            padding-right: 16px;
+            
+            /* CHANGE BACK: Standard padding since we are in a drawer */
+            padding: 16px; 
+
             display: flex;
             align-items: center;
             justify-content: space-between;

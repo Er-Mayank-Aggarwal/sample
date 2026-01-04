@@ -263,46 +263,61 @@
   <script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>
 
   <script>
-    // 1. Open the Catalog (Menu)
-    function openCatalog() {
-      const content = document.querySelector('.catalog-content');
-      const header = document.querySelector('.catalog-header'); // Select by Class
+    // 1. Open the Menu (Catalog)
+    function openCatalog() { 
+        const content = document.querySelector('.catalog-content');
+        
+        // Allow container scrolling for the menu grid
+        content.style.overflowY = 'auto'; 
 
-      // Ensure header is visible (in case it was hidden by cart)
-      header.style.display = 'flex';
+        // Show internal Catalog Header
+        document.querySelector('.catalog-header').style.display = 'flex';
+        
+        // Ensure Main App Header is visible
+        document.querySelector('.app-header').style.display = 'flex';
 
-      content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none;"></iframe>';
-      document.getElementById('catalog-drawer').classList.add('open');
-      document.getElementById('swipe-trigger').style.display = 'none';
+        content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none; display:block;"></iframe>';
+        
+        document.getElementById('catalog-drawer').classList.add('open'); 
+        document.getElementById('swipe-trigger').style.display = 'none'; 
     }
 
-    // 2. Close everything
-    function closeCatalog() {
-      document.getElementById('catalog-drawer').classList.remove('open');
-      document.getElementById('swipe-trigger').style.display = 'flex';
-      document.querySelector('.catalog-content').innerHTML = '';
-
-      // Reset header display just to be safe
-      document.querySelector('.catalog-header').style.display = 'flex';
+    // 2. Close everything (Back to Video)
+    function closeCatalog() { 
+        document.getElementById('catalog-drawer').classList.remove('open'); 
+        document.getElementById('swipe-trigger').style.display = 'flex'; 
+        
+        setTimeout(() => {
+            document.querySelector('.catalog-content').innerHTML = '';
+        }, 400);
     }
 
-    // 3. Open Cart
+    // 3. Open Cart (90% Height, Hidden Menu Header)
     function openCart() {
-      const content = document.querySelector('.catalog-content');
+        const content = document.querySelector('.catalog-content');
+        
+        // 1. Stop container scrolling (iframe handles it)
+        content.style.overflow = 'hidden';
 
-      // Fix: Use querySelector because '.catalog-header' is a class, not an ID
-      document.querySelector('.catalog-header').style.display = 'none';
+        // 2. Hide only the internal "Menu" header
+        document.querySelector('.catalog-header').style.display = 'none';
 
-      content.innerHTML = '<iframe src="cart.html" style="width:100%; height:100%; border:none; border-radius: 25px 25px 0 0;"></iframe>';
-      document.getElementById('catalog-drawer').classList.add('open');
+        // 3. Keep Main App Header visible (since we are only 90%)
+        document.querySelector('.app-header').style.display = 'flex';
+
+        // 4. Ensure Drawer is 90% with rounded corners
+        const drawer = document.getElementById('catalog-drawer');
+        drawer.style.height = '90%';
+        drawer.style.borderRadius = '25px 25px 0 0';
+
+        content.innerHTML = '<iframe src="cart.html" style="width:100%; height:100%; border:none; display:block; border-radius: 25px 25px 0 0;"></iframe>';
+        drawer.classList.add('open');
     }
 
     function closeCart() {
-        // Simply calling openCatalog() resets the view to the menu
-        // and makes the header visible again via the logic in function #1
         openCatalog();
     }
-  </script>
+</script>
 
 </body>
 
