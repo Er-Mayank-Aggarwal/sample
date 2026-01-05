@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shipping & Delivery</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-blue: #4280FD;
+            --text-grey: #474747;
+            --text-light: #5F6368;
+            --bg-light: #f3f3f5;
+            --success-green: #4CAF50;
+            --discount-green: #4CAF50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Baloo 2', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-grey);
+            padding-bottom: 100px;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .shipping-header {
+            background: var(--primary-blue);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            font-size: 18px;
+            padding: 5px;
+        }
+
+        .header-title {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* DELIVERY TABS */
+        .delivery-tabs {
+            display: flex;
+            background: #fff;
+            margin: 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .delivery-tab {
+            flex: 1;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+            background: #fff;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .delivery-tab.active {
+            background: var(--primary-blue);
+            color: #fff;
+        }
+
+        .delivery-tab i {
+            font-size: 14px;
+        }
+
+        /* ADDRESS SECTION */
+        .address-section {
+            background: #fff;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .current-address {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .current-address i {
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        .address-text {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-grey);
+            line-height: 1.4;
+        }
+
+        .change-address {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary-blue);
+            font-size: 13px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-top: 8px;
+            margin-left: 28px;
+        }
+
+        .change-address i {
+            font-size: 12px;
+        }
+
+        /* DELIVERY MODE SECTION */
+        .section-container {
+            background: #fff;
+            margin: 12px 0;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-grey);
+            margin-bottom: 16px;
+        }
+
+        /* DELIVERY OPTIONS */
+        .delivery-option {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .delivery-option:last-child {
+            border-bottom: none;
+        }
+
+        .option-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: var(--text-grey);
+        }
+
+        .option-content {
+            flex: 1;
+        }
+
+        .option-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-grey);
+            margin-bottom: 4px;
+        }
+
+        .option-subtitle {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .free-delivery-badge {
+            display: inline-block;
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-green);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-top: 8px;
+            border: 1px dashed var(--success-green);
+        }
+
+        .option-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #d0d0d0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-checkbox.checked {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .option-checkbox i {
+            color: #fff;
+            font-size: 12px;
+            display: none;
+        }
+
+        .option-checkbox.checked i {
+            display: block;
+        }
+
+        /* TIME SLOT */
+        .time-slot {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .time-slot-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: var(--text-grey);
+        }
+
+        .time-slot-content {
+            flex: 1;
+        }
+
+        .time-slot-text {
+            font-size: 14px;
+            color: var(--text-grey);
+        }
+
+        .pick-btn {
+            color: var(--primary-blue);
+            font-size: 13px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* BILL DETAILS */
+        .bill-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .bill-label {
+            font-size: 14px;
+            color: var(--text-grey);
+        }
+
+        .bill-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-grey);
+        }
+
+        .bill-row.discount .bill-label,
+        .bill-row.discount .bill-value {
+            color: var(--discount-green);
+        }
+
+        .bill-row.total {
+            border-top: 1px solid #e0e0e0;
+            margin-top: 8px;
+            padding-top: 16px;
+        }
+
+        .bill-row.total .bill-label,
+        .bill-row.total .bill-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .delivery-free {
+            text-decoration: line-through;
+            color: #999;
+            margin-right: 8px;
+            font-size: 13px;
+        }
+
+        .free-text {
+            color: var(--success-green);
+            font-weight: 700;
+        }
+
+        /* FOOTER */
+        .checkout-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            z-index: 200;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+        }
+
+        .footer-price {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .footer-original {
+            font-size: 12px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .footer-total {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-grey);
+        }
+
+        .footer-items {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .place-order-btn {
+            background: var(--primary-blue);
+            color: #fff;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(66, 128, 253, 0.3);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ADDRESS MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .address-modal {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 24px 24px 0 0;
+            padding: 24px 20px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-grey);
+            margin-bottom: 20px;
+        }
+
+        /* SAVED ADDRESS LIST */
+        .saved-address {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .saved-address:last-of-type {
+            border-bottom: none;
+        }
+
+        .address-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d0d0d0;
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .address-radio.selected {
+            border-color: var(--primary-blue);
+        }
+
+        .address-radio.selected::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+        }
+
+        .saved-address-content {
+            flex: 1;
+        }
+
+        .saved-address-text {
+            font-size: 14px;
+            color: var(--text-grey);
+            line-height: 1.4;
+        }
+
+        .default-badge {
+            color: var(--primary-blue);
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .address-check {
+            width: 22px;
+            height: 22px;
+            background: var(--primary-blue);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+        }
+
+        .address-check.visible {
+            opacity: 1;
+        }
+
+        .address-check i {
+            color: #fff;
+            font-size: 12px;
+        }
+
+        /* ADD ADDRESS FORM */
+        .add-address-section {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .add-address-title {
+            color: var(--primary-blue);
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-grey);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Baloo 2', sans-serif;
+            color: var(--text-grey);
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        .form-input::placeholder {
+            color: #999;
+        }
+
+        /* MODAL BUTTONS */
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            gap: 16px;
+        }
+
+        .cancel-btn {
+            background: none;
+            border: none;
+            color: #F44336;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 12px 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .save-address-btn {
+            background: #fff;
+            border: 2px solid var(--primary-blue);
+            color: var(--primary-blue);
+            font-size: 14px;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* TIME PICKER MODAL */
+        .time-modal {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 24px 24px 0 0;
+            padding: 24px 20px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .time-slots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .time-slot-option {
+            padding: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .time-slot-option:hover {
+            border-color: var(--primary-blue);
+        }
+
+        .time-slot-option.selected {
+            background: rgba(66, 128, 253, 0.1);
+            border-color: var(--primary-blue);
+        }
+
+        .time-slot-option .time {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-grey);
+        }
+
+        .time-slot-option .day {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        .confirm-time-btn {
+            width: 100%;
+            background: var(--primary-blue);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <div class="shipping-header">
+        <button class="back-btn" onclick="history.back()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <span class="header-title">Back to cart</span>
+    </div>
+
+    <!-- DELIVERY TABS -->
+    <div class="delivery-tabs">
+        <button class="delivery-tab active" onclick="switchTab('home')">
+            <i class="fas fa-truck"></i>
+            HOME DELIVERY
+        </button>
+        <button class="delivery-tab" onclick="switchTab('pickup')">
+            <i class="fas fa-walking"></i>
+            SELF PICKUP
+        </button>
+    </div>
+
+    <!-- ADDRESS SECTION -->
+    <div class="address-section">
+        <div class="current-address">
+            <i class="fas fa-map-marker-alt"></i>
+            <span class="address-text" id="selected-address">A2-13 Sapana Berrier, Phulera, 303338</span>
+        </div>
+        <button class="change-address" onclick="openAddressModal()">
+            Change address <i class="fas fa-pencil-alt"></i>
+        </button>
+    </div>
+
+    <!-- HOME DELIVERY MODE -->
+    <div class="section-container" id="home-delivery-section">
+        <div class="section-title">Home Delivery Mode</div>
+
+        <!-- Slot Delivery Option -->
+        <div class="delivery-option" onclick="selectDeliveryMode('slot')">
+            <div class="option-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="option-content">
+                <div class="option-title">SLOT DELIVERY by Listerr Go</div>
+                <div class="free-delivery-badge">
+                    <i class="fas fa-gift"></i> Free Delivery Slot on order above INR 499.
+                </div>
+            </div>
+            <div class="option-checkbox checked" id="slot-checkbox">
+                <i class="fas fa-check"></i>
+            </div>
+        </div>
+
+        <!-- Time Slot -->
+        <div class="time-slot">
+            <div class="time-slot-icon">
+                <i class="far fa-clock"></i>
+            </div>
+            <div class="time-slot-content">
+                <div class="time-slot-text" id="selected-time">11am - 1pm, Tomorrow</div>
+            </div>
+            <button class="pick-btn" onclick="openTimeModal()">
+                PICK <i class="fas fa-pencil-alt"></i>
+            </button>
+        </div>
+
+        <!-- Express Delivery Option -->
+        <div class="delivery-option" onclick="selectDeliveryMode('express')">
+            <div class="option-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <div class="option-content">
+                <div class="option-title">INSTANT EXPRESS DELIVERY</div>
+                <div class="option-subtitle">Delivery within 60 minutes !</div>
+            </div>
+            <div class="option-checkbox" id="express-checkbox">
+                <i class="fas fa-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- SELF PICKUP SECTION (Hidden by default) -->
+    <div class="section-container" id="self-pickup-section" style="display: none;">
+        <div class="section-title">Self Pickup Location</div>
+        <div class="delivery-option">
+            <div class="option-icon">
+                <i class="fas fa-store"></i>
+            </div>
+            <div class="option-content">
+                <div class="option-title">Jars n' More Store</div>
+                <div class="option-subtitle">123 Main Street, Phulera - 303338</div>
+            </div>
+        </div>
+        <div class="time-slot">
+            <div class="time-slot-icon">
+                <i class="far fa-clock"></i>
+            </div>
+            <div class="time-slot-content">
+                <div class="time-slot-text">Ready for pickup in 2-3 hours</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BILL DETAILS -->
+    <div class="section-container">
+        <div class="section-title">Bill Details</div>
+        
+        <div class="bill-row">
+            <span class="bill-label">Item Price</span>
+            <span class="bill-value">₹<span id="item-price">1300</span></span>
+        </div>
+        
+        <div class="bill-row discount">
+            <span class="bill-label">Discount</span>
+            <span class="bill-value">-₹<span id="discount-amount">51</span></span>
+        </div>
+        
+        <div class="bill-row">
+            <span class="bill-label">Item Total</span>
+            <span class="bill-value">₹<span id="item-total">1249</span></span>
+        </div>
+        
+        <div class="bill-row">
+            <span class="bill-label">Delivery Amount</span>
+            <span class="bill-value" id="delivery-amount-value">
+                <span class="delivery-free">₹50</span>
+                <span class="free-text">FREE</span>
+            </span>
+        </div>
+        
+        <div class="bill-row total">
+            <span class="bill-label">To Pay</span>
+            <span class="bill-value">₹<span id="total-pay">1249</span></span>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="checkout-footer">
+        <div class="footer-price">
+            <span class="footer-original">₹<span id="footer-original">1300</span></span>
+            <div>
+                <span class="footer-total">₹<span id="footer-total">1249</span></span>
+                <span class="footer-items"><span id="footer-items">4</span> Items</span>
+            </div>
+        </div>
+        <button class="place-order-btn" onclick="placeOrder()">PLACE ORDER</button>
+    </div>
+
+    <!-- ADDRESS MODAL -->
+    <div class="modal-overlay" id="address-modal">
+        <div class="address-modal">
+            <div class="modal-title">Choose Shipping Address</div>
+            
+            <!-- Saved Addresses -->
+            <div class="saved-address" onclick="selectAddress(0, 'A2-13 Sapana Berrier, Phulera, 303338')">
+                <div class="address-radio" id="address-radio-0">
+                </div>
+                <div class="saved-address-content">
+                    <div class="saved-address-text">A2-13 Sapana Berrier, Phulera, 303338</div>
+                    <div class="default-badge">Default</div>
+                </div>
+            </div>
+            
+            <div class="saved-address" onclick="selectAddress(1, 'A2-13 Sapana Berrier, Phulera, 303338')">
+                <div class="address-radio selected" id="address-radio-1">
+                </div>
+                <div class="saved-address-content">
+                    <div class="saved-address-text">A2-13 Sapana Berrier, Phulera, 303338</div>
+                </div>
+                <div class="address-check visible">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+
+            <!-- Add Address Form -->
+            <div class="add-address-section">
+                <div class="add-address-title">ADD ADDRESS</div>
+                
+                <div class="form-group">
+                    <label class="form-label">House Number/Name, Street Name</label>
+                    <input type="text" class="form-input" placeholder="For eg: 89 A, Maharani Farms" id="street-input">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-input" placeholder="For eg: Phulera" id="city-input">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">PIN CODE</label>
+                    <input type="text" class="form-input" placeholder="For eg: 303338" id="pincode-input">
+                </div>
+            </div>
+
+            <!-- Modal Buttons -->
+            <div class="modal-buttons">
+                <button class="cancel-btn" onclick="closeAddressModal()">CANCEL</button>
+                <button class="save-address-btn" onclick="saveNewAddress()">SAVE ADDRESS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIME PICKER MODAL -->
+    <div class="modal-overlay" id="time-modal">
+        <div class="time-modal">
+            <div class="modal-title">Select Delivery Time Slot</div>
+            
+            <div class="time-slots-grid">
+                <div class="time-slot-option selected" onclick="selectTimeSlot(this, '11am - 1pm', 'Tomorrow')">
+                    <div class="time">11am - 1pm</div>
+                    <div class="day">Tomorrow</div>
+                </div>
+                <div class="time-slot-option" onclick="selectTimeSlot(this, '2pm - 4pm', 'Tomorrow')">
+                    <div class="time">2pm - 4pm</div>
+                    <div class="day">Tomorrow</div>
+                </div>
+                <div class="time-slot-option" onclick="selectTimeSlot(this, '4pm - 6pm', 'Tomorrow')">
+                    <div class="time">4pm - 6pm</div>
+                    <div class="day">Tomorrow</div>
+                </div>
+                <div class="time-slot-option" onclick="selectTimeSlot(this, '6pm - 8pm', 'Tomorrow')">
+                    <div class="time">6pm - 8pm</div>
+                    <div class="day">Tomorrow</div>
+                </div>
+                <div class="time-slot-option" onclick="selectTimeSlot(this, '9am - 11am', 'Day After')">
+                    <div class="time">9am - 11am</div>
+                    <div class="day">Day After</div>
+                </div>
+                <div class="time-slot-option" onclick="selectTimeSlot(this, '11am - 1pm', 'Day After')">
+                    <div class="time">11am - 1pm</div>
+                    <div class="day">Day After</div>
+                </div>
+            </div>
+
+            <button class="confirm-time-btn" onclick="confirmTimeSlot()">CONFIRM TIME SLOT</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedDeliveryMode = 'slot';
+        let selectedAddressIndex = 1;
+        let selectedTimeSlot = { time: '11am - 1pm', day: 'Tomorrow' };
+
+        // Tab Switching
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.delivery-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'home') {
+                tabs[0].classList.add('active');
+                document.getElementById('home-delivery-section').style.display = 'block';
+                document.getElementById('self-pickup-section').style.display = 'none';
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('home-delivery-section').style.display = 'none';
+                document.getElementById('self-pickup-section').style.display = 'block';
+            }
+        }
+
+        // Delivery Mode Selection
+        function selectDeliveryMode(mode) {
+            selectedDeliveryMode = mode;
+            
+            const slotCheckbox = document.getElementById('slot-checkbox');
+            const expressCheckbox = document.getElementById('express-checkbox');
+            
+            if (mode === 'slot') {
+                slotCheckbox.classList.add('checked');
+                expressCheckbox.classList.remove('checked');
+            } else {
+                slotCheckbox.classList.remove('checked');
+                expressCheckbox.classList.add('checked');
+            }
+        }
+
+        // Address Modal
+        function openAddressModal() {
+            document.getElementById('address-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAddressModal() {
+            document.getElementById('address-modal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function selectAddress(index, address) {
+            selectedAddressIndex = index;
+            
+            // Update radio buttons
+            document.querySelectorAll('.address-radio').forEach((radio, i) => {
+                if (i === index) {
+                    radio.classList.add('selected');
+                } else {
+                    radio.classList.remove('selected');
+                }
+            });
+
+            // Update checkmarks
+            document.querySelectorAll('.address-check').forEach((check, i) => {
+                if (i === index) {
+                    check.classList.add('visible');
+                } else {
+                    check.classList.remove('visible');
+                }
+            });
+
+            // Update displayed address
+            document.getElementById('selected-address').textContent = address;
+        }
+
+        function saveNewAddress() {
+            const street = document.getElementById('street-input').value;
+            const city = document.getElementById('city-input').value;
+            const pincode = document.getElementById('pincode-input').value;
+
+            if (street && city && pincode) {
+                const newAddress = `${street}, ${city}, ${pincode}`;
+                document.getElementById('selected-address').textContent = newAddress;
+                closeAddressModal();
+                
+                // Clear form
+                document.getElementById('street-input').value = '';
+                document.getElementById('city-input').value = '';
+                document.getElementById('pincode-input').value = '';
+                
+                alert('Address saved successfully!');
+            } else {
+                alert('Please fill in all address fields');
+            }
+        }
+
+        // Time Modal
+        function openTimeModal() {
+            document.getElementById('time-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTimeModal() {
+            document.getElementById('time-modal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function selectTimeSlot(element, time, day) {
+            selectedTimeSlot = { time, day };
+            
+            document.querySelectorAll('.time-slot-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        function confirmTimeSlot() {
+            document.getElementById('selected-time').textContent = `${selectedTimeSlot.time}, ${selectedTimeSlot.day}`;
+            closeTimeModal();
+        }
+
+        // Close modals on overlay click
+        document.getElementById('address-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddressModal();
+            }
+        });
+
+        document.getElementById('time-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeTimeModal();
+            }
+        });
+
+        // Place Order
+        function placeOrder() {
+            alert('Order placed successfully! 🎉\n\nDelivery: ' + selectedTimeSlot.time + ', ' + selectedTimeSlot.day);
+        }
+
+        // Helper function to format price (fix floating point issues)
+        function formatPrice(num) {
+            return Math.round(num * 100) / 100; // Round to 2 decimal places
+        }
+
+        // Load cart data (if coming from cart page)
+        function loadCartData() {
+            const cart = JSON.parse(localStorage.getItem("cart")) || {};
+            let totalPrice = 0;
+            let itemCount = 0;
+
+            Object.entries(cart).forEach(([name, item]) => {
+                totalPrice += item.qty * item.price;
+                itemCount += item.qty;
+            });
+
+            if (itemCount > 0) {
+                // Round all values to fix floating point precision
+                totalPrice = formatPrice(totalPrice);
+                const discount = formatPrice(Math.round(totalPrice * 0.04)); // 4% discount
+                const itemTotal = formatPrice(totalPrice - discount);
+                
+                // Delivery charge logic: FREE if >= 499, else ₹50
+                const deliveryCharge = itemTotal >= 499 ? 0 : 50;
+                const finalPrice = formatPrice(itemTotal + deliveryCharge);
+
+                // Update Item Price
+                document.getElementById('item-price').textContent = totalPrice.toFixed(2);
+                document.getElementById('discount-amount').textContent = discount.toFixed(2);
+                document.getElementById('item-total').textContent = itemTotal.toFixed(2);
+                
+                // Update Delivery Amount display
+                const deliveryEl = document.getElementById('delivery-amount-value');
+                if (deliveryCharge === 0) {
+                    deliveryEl.innerHTML = '<span class="delivery-free">₹50</span><span class="free-text">FREE</span>';
+                } else {
+                    deliveryEl.innerHTML = '<span style="color: var(--text-grey); font-weight: 600;">₹' + deliveryCharge + '</span>';
+                }
+                
+                // Update To Pay
+                document.getElementById('total-pay').textContent = finalPrice.toFixed(2);
+                
+                // Update Footer
+                document.getElementById('footer-original').textContent = totalPrice.toFixed(2);
+                document.getElementById('footer-total').textContent = finalPrice.toFixed(2);
+                document.getElementById('footer-items').textContent = itemCount;
+            }
+        }
+
+        loadCartData();
+    </script>
+</body>
+</html>
