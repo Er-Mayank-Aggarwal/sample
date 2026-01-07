@@ -138,6 +138,40 @@
             box-shadow: 0 4px 10px rgba(66, 128, 253, 0.3);
         }
 
+        /* QTY CONTROL (Same as Menu) */
+        .qty-control-lg {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            border: 2px solid #4280FD;
+            border-radius: 8px;
+            padding: 8px 20px;
+            background: #fff;
+        }
+
+        .qty-btn-lg {
+            background: none;
+            border: none;
+            color: #4280FD;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0 8px;
+        }
+
+        .qty-btn-lg:active {
+            transform: scale(0.9);
+        }
+
+        .qty-value-lg {
+            font-size: 18px;
+            font-weight: 700;
+            min-width: 24px;
+            text-align: center;
+            color: #333;
+        }
+
         .sold-by {
             font-size: 13px; color: #666;
             margin-bottom: 24px;
@@ -196,7 +230,9 @@
                 <span class="price-label">Listerr Price: <span id="p-price">₹0</span></span>
                 <span class="mrp">MRP: <span id="p-mrp">₹0</span></span>
             </div>
-            <button class="add-btn-lg" onclick="addToCartFromPage()">ADD</button>
+            <div id="add-control-container">
+                <button class="add-btn-lg" onclick="addToCartFromPage()">ADD</button>
+            </div>
         </div>
 
         <div class="sold-by">
@@ -289,43 +325,10 @@
         }
 
         /* ================================
-           ADD TO CART LOGIC (FIXED)
+           UPDATE PARENT BADGE
         ================================ */
-        // Initialize Badge
-        const count = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
-        const badge = document.querySelector('.cart-badge');
-        if(badge) badge.textContent = count;
-
-        function addToCartFromPage() {
-            // Safety Check
-            if(!product) {
-                alert("Error: Product data not loaded. Please go back to the menu.");
-                return;
-            }
-            
-            // Refresh Cart (in case it changed in another tab)
-            cart = JSON.parse(localStorage.getItem('cart')) || {};
-
-            // Add or Increment Item
-            if(cart[product.name]) {
-                cart[product.name].qty++;
-                // Ensure image is updated if missing
-                if(!cart[product.name].img) cart[product.name].img = product.image;
-            } else {
-                // 🔥 CRITICAL FIX: Save the 'img' property here!
-                cart[product.name] = { 
-                    price: product.price, 
-                    qty: 1, 
-                    img: product.image 
-                };
-            }
-            
-            // Save to Storage
-            localStorage.setItem('cart', JSON.stringify(cart));
-            
-            // Update Local Badge
+        function updateBadges() {
             const newCount = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
-            if(badge) badge.textContent = newCount;
             
             // Update Parent Badge (Index.html)
             try { 
@@ -333,18 +336,105 @@
             } catch(e) { 
                 console.log("Could not update parent badge"); 
             }
-
-            // Visual Feedback (Button Animation)
-            const btn = document.querySelector('.add-btn-lg');
-            const originalText = btn.textContent;
-            btn.textContent = "ADDED ✓";
-            btn.style.backgroundColor = "#2e7d32"; // Green
-            
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.backgroundColor = "#4280FD"; // Back to Blue
-            }, 1000);
         }
+
+        /* ================================
+           RENDER ADD/QTY CONTROL
+        ================================ */
+        function renderAddControl() {
+            const container = document.getElementById('add-control-container');
+            
+            if (!product) return;
+            
+            // Refresh cart from storage
+            cart = JSON.parse(localStorage.getItem('cart')) || {};
+            
+            if (cart[product.name] && cart[product.name].qty > 0) {
+                // Show QTY Control
+                container.innerHTML = `
+                    <div class="qty-control-lg">
+                        <button class="qty-btn-lg" onclick="decreaseQty()">−</button>
+                        <span class="qty-value-lg">${cart[product.name].qty}</span>
+                        <button class="qty-btn-lg" onclick="increaseQty()">+</button>
+                    </div>
+                `;
+            } else {
+                // Show ADD Button
+                container.innerHTML = `
+                    <button class="add-btn-lg" onclick="addToCartFromPage()">ADD</button>
+                `;
+            }
+        }
+
+        /* ================================
+           ADD TO CART
+        ================================ */
+        function addToCartFromPage() {
+            if(!product) {
+                alert("Error: Product data not loaded. Please go back to the menu.");
+                return;
+            }
+            
+            // Refresh Cart
+            cart = JSON.parse(localStorage.getItem('cart')) || {};
+
+            // Add item with qty 1
+            cart[product.name] = { 
+                price: product.price, 
+                qty: 1, 
+                img: product.image 
+            };
+            
+            // Save to Storage
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // Update UI
+            renderAddControl();
+            updateBadges();
+        }
+
+        /* ================================
+           INCREASE QTY
+        ================================ */
+        function increaseQty() {
+            if(!product) return;
+            
+            cart = JSON.parse(localStorage.getItem('cart')) || {};
+            
+            if (cart[product.name]) {
+                cart[product.name].qty++;
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderAddControl();
+                updateBadges();
+            }
+        }
+
+        /* ================================
+           DECREASE QTY
+        ================================ */
+        function decreaseQty() {
+            if(!product) return;
+            
+            cart = JSON.parse(localStorage.getItem('cart')) || {};
+            
+            if (cart[product.name]) {
+                cart[product.name].qty--;
+                
+                if (cart[product.name].qty <= 0) {
+                    delete cart[product.name];
+                }
+                
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderAddControl();
+                updateBadges();
+            }
+        }
+
+        /* ================================
+           INIT - Render correct state
+        ================================ */
+        renderAddControl();
+        updateBadges();
     </script>
 </body>
 </html>
