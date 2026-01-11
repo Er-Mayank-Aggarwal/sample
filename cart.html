@@ -126,6 +126,130 @@
             transform: translateY(-50%) rotate(10deg);
             opacity: 0.8; pointer-events: none; z-index: 0;
         }
+
+        /* Overlay */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+/* Card */
+.login-card {
+  background: #fff;
+  width: 100%;
+  max-width: 360px;
+  border-radius: 18px;
+  padding: 28px 22px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+  animation: slideUp 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Headings */
+.login-title {
+  margin: 0;
+  color: #4280FD;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.login-subtitle {
+  margin: 6px 0 20px;
+  font-size: 13px;
+  color: #777;
+  text-align: center;
+}
+
+/* Phone inputs */
+.phone-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.phone-row input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+#country-code {
+  width: 70px;
+  text-align: center;
+}
+
+/* Buttons */
+.primary-btn {
+  width: 100%;
+  padding: 12px;
+  background: #4280FD;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.primary-btn:active {
+  transform: scale(0.98);
+}
+
+/* OTP */
+.otp-section {
+  display: none;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.otp-section input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+/* Message */
+.otp-message {
+  min-height: 18px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #e53935;
+}
+
+/* Cancel */
+.cancel-btn {
+  margin-top: 14px;
+  background: none;
+  border: none;
+  color: #4280FD;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Animation */
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
     </style>
 </head>
 
@@ -152,7 +276,39 @@
             <div class="total-label">Total</div>
             <div class="total-price">₹<span id="total-price">0</span></div>
         </div>
-        <button class="checkout-btn" onclick="window.location.href='shipping.html'">CHECKOUT</button>
+        <button class="checkout-btn" id="checkout-btn" onclick="window.checkoutHandler && window.checkoutHandler(event)">CHECKOUT</button>
+            <!-- Login Modal -->
+            <!-- LOGIN MODAL -->
+<div id="login-modal" class="login-overlay" onclick="hideLoginModal(event)">
+  <div class="login-card" onclick="event.stopPropagation()">
+
+    <h2 class="login-title">Sign in to continue</h2>
+    <p class="login-subtitle">We’ll send an OTP to your phone</p>
+
+    <div id="recaptcha-container"></div>
+
+    <div class="phone-row">
+      <input id="country-code" type="text" value="+91" placeholder="+91">
+      <input id="phone-number" type="tel" placeholder="Phone number">
+    </div>
+
+    <button class="primary-btn" onclick="window.sendOTP()">Send OTP</button>
+
+    <div id="otp-section" class="otp-section">
+      <input id="otp-code" type="text" placeholder="Enter 6-digit OTP">
+      <button class="primary-btn" onclick="window.verifyOTP()">Verify OTP</button>
+    </div>
+
+    <div id="otp-message" class="otp-message"></div>
+
+    <button class="cancel-btn" onclick="window.hideLoginModal()">Cancel</button>
+
+  </div>
+</div>
+
+    </div>
+
+    <script type="module" src="firebase-login.js"></script>
     </div>
 
     <script>
