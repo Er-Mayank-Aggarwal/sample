@@ -7,15 +7,16 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-// Firebase config
+
+// Firebase config from environment variables (Vite style)
 const firebaseConfig = {
-  apiKey: "AIzaSyB55hRSiivIVvQpBsvgDvjK3_gYpCxdLOo",
-  authDomain: "listerr-63fe3.firebaseapp.com",
-  projectId: "listerr-63fe3",
-  storageBucket: "listerr-63fe3.firebasestorage.app",
-  messagingSenderId: "331250194228",
-  appId: "1:331250194228:web:66889b3ecfef58d110f761",
-  measurementId: "G-1CBY9KKR9X"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
