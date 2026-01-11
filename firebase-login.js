@@ -7,16 +7,15 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-
-// Firebase config from environment variables (Vite style)
+// Firebase config
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyA78LZZJSGAundFO3Uus-Eoqas4N65s5Vs",
+  authDomain: "listerr-network.firebaseapp.com",
+  projectId: "listerr-network",
+  storageBucket: "listerr-network.firebasestorage.app",
+  messagingSenderId: "311601038241",
+  appId: "1:311601038241:web:3c339441baa46b345541e0",
+  measurementId: "G-FM6L3XHLTB"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -72,9 +71,11 @@ function waitForAuthThenProceed() {
 /* ---------------- OTP ---------------- */
 
 window.sendOTP = function () {
+
   const countryCode = document.getElementById("country-code").value.trim();
   const phone = document.getElementById("phone-number").value.trim();
   const phoneNumber = countryCode + phone;
+  console.log("Phone number being sent:", phoneNumber);
 
   if (!/^\+\d{10,15}$/.test(phoneNumber)) {
     document.getElementById("otp-message").textContent =
@@ -82,12 +83,24 @@ window.sendOTP = function () {
     return;
   }
 
+  // Setup visible reCAPTCHA if not already set
   if (!window.recaptchaVerifier) {
+    const recaptchaContainer = document.getElementById('recaptcha-container');
+    if (!recaptchaContainer) {
+      alert('reCAPTCHA container not found. Please add <div id="recaptcha-container"></div> to your HTML.');
+      return;
+    }
     window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",
-      { size: "invisible" },
+      'recaptcha-container',
+      {
+        'size': 'normal', // visible checkbox
+        'callback': (response) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        }
+      },
       auth
     );
+    window.recaptchaVerifier.render();
   }
 
   signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
@@ -143,3 +156,4 @@ onAuthStateChanged(auth, (user) => {
 window.getCurrentUser = function () {
   return authReady ? cachedUser : null;
 };
+

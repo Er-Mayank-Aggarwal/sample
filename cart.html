@@ -14,7 +14,7 @@
         }
         body {
             margin: 0;
-            font-family: 'Baloo 2', sans-serif;
+            font-family: 'Baloo 2';
             background: var(--bg-light);
             color: var(--text-grey);
             padding-bottom: 90px;
@@ -285,14 +285,15 @@
     <h2 class="login-title">Sign in to continue</h2>
     <p class="login-subtitle">We’ll send an OTP to your phone</p>
 
-    <div id="recaptcha-container"></div>
-
     <div class="phone-row">
       <input id="country-code" type="text" value="+91" placeholder="+91">
       <input id="phone-number" type="tel" placeholder="Phone number">
     </div>
 
     <button class="primary-btn" onclick="window.sendOTP()">Send OTP</button>
+
+  <!-- reCAPTCHA container for Firebase phone auth -->
+  <div id="recaptcha-container" style="margin: 16px 0;"></div>
 
     <div id="otp-section" class="otp-section">
       <input id="otp-code" type="text" placeholder="Enter 6-digit OTP">
