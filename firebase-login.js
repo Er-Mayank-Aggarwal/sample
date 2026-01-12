@@ -7,6 +7,22 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
+window.setGenerateOTPLoading = function (isLoading) {
+  const btn = document.getElementById("generate-otp-btn");
+  if (!btn) return;
+
+  if (isLoading) {
+    btn.disabled = true;
+    btn.textContent = "SENDING…";
+    btn.style.opacity = "0.7";
+  } else {
+    btn.disabled = false;
+    btn.textContent = "GENERATE OTP";
+    btn.style.opacity = "1";
+  }
+}
+
+
 // Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyA78LZZJSGAundFO3Uus-Eoqas4N65s5Vs",
@@ -71,31 +87,25 @@ function waitForAuthThenProceed() {
 /* ---------------- OTP ---------------- */
 
 window.sendOTP = function () {
-
-  const countryCode = document.getElementById("country-code").value.trim();
   const phone = document.getElementById("phone-number").value.trim();
-  const phoneNumber = countryCode + phone;
-  console.log("Phone number being sent:", phoneNumber);
+  const phoneNumber = "+91" + phone;
 
-  if (!/^\+\d{10,15}$/.test(phoneNumber)) {
+  console.log("Sending OTP to:", phoneNumber);
+
+  if (!/^\+91\d{10}$/.test(phoneNumber)) {
     document.getElementById("otp-message").textContent =
-      "Enter valid country code and phone number!";
+      "Enter a valid 10-digit phone number";
+    setGenerateOTPLoading(false);
     return;
   }
 
-  // Setup visible reCAPTCHA if not already set
   if (!window.recaptchaVerifier) {
-    const recaptchaContainer = document.getElementById('recaptcha-container');
-    if (!recaptchaContainer) {
-      alert('reCAPTCHA container not found. Please add <div id="recaptcha-container"></div> to your HTML.');
-      return;
-    }
     window.recaptchaVerifier = new RecaptchaVerifier(
-      'recaptcha-container',
+      "recaptcha-container",
       {
-        'size': 'normal', // visible checkbox
-        'callback': (response) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        size: "invisible",
+        callback: () => {
+          console.log("reCAPTCHA solved");
         }
       },
       auth
@@ -106,17 +116,40 @@ window.sendOTP = function () {
   signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
     .then((result) => {
       confirmationResult = result;
-      document.getElementById("otp-section").style.display = "block";
+
+      // ✅ Hide Generate OTP
+      document.getElementById("generate-otp-wrapper").style.display = "none";
+
+      // ✅ Show OTP section
+      const otpSection = document.getElementById("otp-section");
+      otpSection.style.display = "block";
+otpSection.offsetHeight; // force reflow
+otpSection.style.animation = "slideUp 0.25s ease";
+
+
       document.getElementById("otp-message").textContent = "OTP sent!";
     })
     .catch((error) => {
-      document.getElementById("otp-message").textContent = error.message;
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
+      console.error(error);
+      document.getElementById("otp-message").textContent =
+        error.message || "Failed to send OTP. Try again.";
+
+      // 🔁 Restore button
+      setGenerateOTPLoading(false);
     });
 };
+
+
+function resetOTPUI() {
+  document.getElementById("otp-section").style.display = "none";
+  document.getElementById("generate-otp-wrapper").style.display = "block";
+  document.getElementById("otp-message").textContent = "";
+  setGenerateOTPLoading(false);
+}
+
+document.getElementById("phone-number").addEventListener("input", resetOTPUI);
+document.getElementById("user-name").addEventListener("input", resetOTPUI);
+
 
 window.verifyOTP = function () {
   const code = document.getElementById("otp-code").value.trim();

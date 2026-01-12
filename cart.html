@@ -1,400 +1,690 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Cart</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        :root {
-            --primary-blue: #4280FD;
-            --text-grey: #474747;
-            --bg-light: #f3f3f5;
-        }
-        body {
-            margin: 0;
-            font-family: 'Baloo 2';
-            background: var(--bg-light);
-            color: var(--text-grey);
-            padding-bottom: 90px;
-            overflow-x: hidden;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Li Listerr - Cart</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        /* HEADER - Notch Safe */
-        /* HEADER */
-        .cart-header {
-            background: #fff;
-            
-            /* CHANGE BACK: Standard padding since we are in a drawer */
-            padding: 16px; 
+  <style>
+    :root {
+      --primary-blue: #4280FD;
+      --text-grey: #474747;
+      --bg-light: #f3f3f5;
+    }
 
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
+    body {
+      margin: 0;
+      font-family: 'Baloo 2';
+      background: var(--bg-light);
+      color: var(--text-grey);
+      padding-bottom: 90px;
+      overflow-x: hidden;
+    }
 
-        .back-btn-catalog { background: none; border: none; cursor: pointer; padding: 5px; }
-        .clear-cart { background: none; border: none; color: #e53935; font-weight: 700; font-size: 12px; cursor: pointer; letter-spacing: 0.5px; }
+    /* HEADER - Notch Safe */
+    /* HEADER */
+    .cart-header {
+      background: #fff;
 
-        /* STORE CARD */
-        .cart-store {
-            background: #fff;
-            margin: 16px;
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            position: relative;
-            z-index: 10;
-        }
+      /* CHANGE BACK: Standard padding since we are in a drawer */
+      padding: 16px;
 
-        .store-header { margin-bottom: 12px; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; }
-        .store-name { font-weight: 800; font-size: 16px; }
-        .store-items { font-size: 12px; color: #999; font-weight: 600; }
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
 
-        /* CART ITEM - WITH IMAGE */
-        .cart-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f5f5f5;
-        }
-        .cart-item:last-child { border-bottom: none; }
+    .back-btn-catalog {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px;
+    }
 
-        /* 🔥 NEW IMAGE STYLE */
-        .cart-thumb {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            object-fit: cover;
-            background: #eee;
-            margin-right: 12px;
-            border: 1px solid #f0f0f0;
-        }
+    .clear-cart {
+      background: none;
+      border: none;
+      color: #e53935;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+    }
 
-        .cart-item-info { flex: 1; padding-right: 8px; }
-        .cart-item-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; line-height: 1.2; }
-        .cart-item-price { font-size: 13px; color: #666; }
+    /* STORE CARD */
+    .cart-store {
+      background: #fff;
+      margin: 16px;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      position: relative;
+      z-index: 10;
+    }
 
-        /* QTY CONTROLS */
-        .qty-box {
-            display: flex;
-            align-items: center;
-            border: 1px solid var(--primary-blue);
-            border-radius: 8px;
-            padding: 2px 6px;
-            gap: 10px;
-            background: #fcfcfc;
-            height: 32px;
-        }
+    .store-header {
+      margin-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 8px;
+    }
 
-        .qty-box button { background: none; border: none; font-size: 16px; color: var(--primary-blue); cursor: pointer; padding: 0; line-height: 1; }
-        .qty-value { font-size: 14px; font-weight: 700; min-width: 10px; text-align: center; }
+    .store-name {
+      font-weight: 800;
+      font-size: 16px;
+    }
 
-        .remove-btn { margin-left: 12px; color: #ff4d4f; cursor: pointer; padding: 4px; font-size: 14px; }
+    .store-items {
+      font-size: 12px;
+      color: #999;
+      font-weight: 600;
+    }
 
-        /* FOOTER */
-        .cart-footer {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: #ffffff;
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-            z-index: 200;
-            padding-bottom: max(16px, env(safe-area-inset-bottom));
-        }
+    /* CART ITEM - WITH IMAGE */
+    .cart-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
 
-        .total-price { font-size: 20px; font-weight: 800; color: var(--text-grey); }
-        .total-label { font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700; }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
 
-        .checkout-btn {
-            background: var(--primary-blue); color: #fff; border: none;
-            padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 14px;
-            box-shadow: 0 4px 12px rgba(66, 128, 253, 0.3); cursor: pointer;
-        }
+    /* 🔥 NEW IMAGE STYLE */
+    .cart-thumb {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #eee;
+      margin-right: 12px;
+      border: 1px solid #f0f0f0;
+    }
 
-        /* BACKGROUND ART */
-        .cart-bg-art {
-            position: fixed; top: 65%; right: -15px; width: 180px;
-            transform: translateY(-50%) rotate(10deg);
-            opacity: 0.8; pointer-events: none; z-index: 0;
-        }
+    .cart-item-info {
+      flex: 1;
+      padding-right: 8px;
+    }
 
-        /* Overlay */
-.login-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(2px);
-}
+    .cart-item-name {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
 
-/* Card */
-.login-card {
-  background: #fff;
-  width: 100%;
-  max-width: 360px;
-  border-radius: 18px;
-  padding: 28px 22px;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.18);
-  animation: slideUp 0.3s ease-out;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+    .cart-item-price {
+      font-size: 13px;
+      color: #666;
+    }
 
-/* Headings */
-.login-title {
-  margin: 0;
-  color: #4280FD;
-  font-size: 22px;
-  font-weight: 800;
-}
+    /* QTY CONTROLS */
+    .qty-box {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--primary-blue);
+      border-radius: 8px;
+      padding: 2px 6px;
+      gap: 10px;
+      background: #fcfcfc;
+      height: 32px;
+    }
 
-.login-subtitle {
-  margin: 6px 0 20px;
-  font-size: 13px;
-  color: #777;
-  text-align: center;
-}
+    .qty-box button {
+      background: none;
+      border: none;
+      font-size: 16px;
+      color: var(--primary-blue);
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
 
-/* Phone inputs */
-.phone-row {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-  margin-bottom: 14px;
-}
+    .qty-value {
+      font-size: 14px;
+      font-weight: 700;
+      min-width: 10px;
+      text-align: center;
+    }
 
-.phone-row input {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
+    .remove-btn {
+      margin-left: 12px;
+      color: #ff4d4f;
+      cursor: pointer;
+      padding: 4px;
+      font-size: 14px;
+    }
 
-#country-code {
-  width: 70px;
-  text-align: center;
-}
+    /* FOOTER */
+    .cart-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+      z-index: 200;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
 
-/* Buttons */
-.primary-btn {
-  width: 100%;
-  padding: 12px;
-  background: #4280FD;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 8px;
-}
+    .total-price {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-grey);
+    }
 
-.primary-btn:active {
-  transform: scale(0.98);
-}
+    .total-label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
 
-/* OTP */
-.otp-section {
-  display: none;
-  width: 100%;
-  margin-top: 14px;
-}
+    .checkout-btn {
+      background: var(--primary-blue);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(66, 128, 253, 0.3);
+      cursor: pointer;
+    }
 
-.otp-section input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
-}
+    /* BACKGROUND ART */
+    .cart-bg-art {
+      position: fixed;
+      top: 65%;
+      right: -15px;
+      width: 180px;
+      transform: translateY(-50%) rotate(10deg);
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-/* Message */
-.otp-message {
-  min-height: 18px;
-  margin-top: 8px;
-  font-size: 13px;
-  color: #e53935;
-}
+    /* Overlay */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(2px);
+    }
 
-/* Cancel */
-.cancel-btn {
-  margin-top: 14px;
-  background: none;
-  border: none;
-  color: #4280FD;
-  font-weight: 600;
-  cursor: pointer;
-}
+    /* Card */
+    .login-card {
+      background: #fff;
+      width: 100%;
+      max-width: 360px;
+      border-radius: 18px;
+      padding: 28px 22px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+      animation: slideUp 0.3s ease-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-/* Animation */
-@keyframes slideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
+    /* Headings */
+    .login-title {
+      margin: 0;
+      color: #4280FD;
+      font-size: 22px;
+      font-weight: 800;
+    }
 
-    </style>
+    .login-subtitle {
+      margin: 6px 0 20px;
+      font-size: 13px;
+      color: #777;
+      text-align: center;
+    }
+
+    /* Phone input container */
+    .phone-input {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 52px;
+      background: #eef5ff;
+      border-radius: 14px;
+      padding: 0 14px;
+      box-sizing: border-box;
+    }
+
+    /* +91 prefix */
+    .country-code {
+      font-size: 16px;
+      font-weight: 600;
+      color: #555;
+      margin-right: 8px;
+      white-space: nowrap;
+    }
+
+    /* Phone number input */
+    .phone-input input {
+      /* Prevent autofill/cached values from breaking style */
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      transition: background 0s;
+    }
+
+    .phone-input input:-webkit-autofill,
+    .phone-input input:-webkit-autofill:focus,
+    .phone-input input:-webkit-autofill:hover,
+    .phone-input input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #eef5ff inset !important;
+      box-shadow: 0 0 0 1000px #eef5ff inset !important;
+      border-radius: 0 !important;
+      background: #eef5ff !important;
+      color: #222 !important;
+      caret-color: #222 !important;
+    }
+
+    /* Autofill fix for Chrome, Safari, Edge */
+    .phone-input input:-webkit-autofill,
+    .phone-input input:-webkit-autofill:focus,
+    .phone-input input:-webkit-autofill:hover,
+    .phone-input input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #eef5ff inset !important;
+      box-shadow: 0 0 0 1000px #eef5ff inset !important;
+      border-radius: 0 !important;
+      background: #eef5ff !important;
+      color: #222 !important;
+      caret-color: #222 !important;
+    }
+
+    /* Autofill fix for Firefox */
+    .phone-input input:-moz-autofill {
+      box-shadow: 0 0 0 1000px #eef5ff inset !important;
+      border-radius: 0 !important;
+      background: #eef5ff !important;
+      color: #222 !important;
+      caret-color: #222 !important;
+    }
+
+    .phone-input input:focus {
+      border: none;
+      outline: none;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+
+    /* Buttons */
+    .primary-btn {
+      width: 100%;
+      padding: 12px;
+      background: #4280FD;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .primary-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* OTP */
+    .otp-section {
+      display: none;
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    .otp-section input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    /* Message */
+    .otp-message {
+      min-height: 18px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #e53935;
+    }
+
+    /* Cancel */
+    .cancel-btn {
+      margin-top: 14px;
+      background: none;
+      border: none;
+      color: #4280FD;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Animation */
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Minimal Card like Image */
+    .login-card.minimal {
+      border-radius: 22px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    /* Logo */
+    .login-logo {
+      margin-bottom: 6px;
+    }
+
+    /* Headings */
+    .welcome-title {
+      margin: 0 0 2px 0;
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .welcome-subtitle {
+      font-size: 1.1rem;
+      color: #777;
+      margin-bottom: 22px;
+      margin-top: 0;
+    }
+
+    /* Inputs */
+    .input-box {
+      width: 100%;
+      height: 52px;
+      /* 🔑 same as phone box */
+      padding: 0 16px;
+      /* horizontal only */
+      border-radius: 14px;
+      /* same curve */
+      border: none;
+      background: #eef5ff;
+      font-size: 16px;
+      outline: none;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+
+    /* Phone row */
+    .phone-input {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 52px;
+      /* 🔑 same height */
+      background: #eef5ff;
+      border-radius: 14px;
+      padding: 0 14px;
+      box-sizing: border-box;
+    }
+
+
+    .country-code {
+      padding: 0 10px;
+      font-size: 16px;
+      color: #555;
+      font-weight: 600;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .phone-input input {
+      border: none;
+      background: transparent;
+      padding: 12px;
+      flex: 1;
+      font-size: 16px;
+      outline: none;
+      height: 100%;
+    }
+
+    /* Button */
+    .primary-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    /* reCAPTCHA */
+    .recaptcha-box {
+      height: 1px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+
+    /* OTP */
+    .otp-section {
+      margin-top: 14px;
+    }
+  </style>
 </head>
 
 <body>
-    <img class="cart-bg-art" src="cartoon.png" alt="Background">
+  <img class="cart-bg-art" src="cartoon.png" alt="Background">
 
-    <div class="cart-header">
-        <button class="back-btn-catalog" onclick="window.parent.closeCart()">
-          <i class="fas fa-arrow-left" style="font-size: 20px; color: #474747;"></i>
-        </button>
-        <button class="clear-cart">CLEAR CART</button>
-    </div>
-
-    <div class="cart-store">
-        <div class="store-header">
-            <div class="store-name">Jars n' More</div>
-            <div class="store-items"><span id="store-item-count">0</span> ITEMS</div>
-        </div>
-        <div id="cart-items"></div>
-    </div>
-
-    <div class="cart-footer">
-        <div class="cart-summary">
-            <div class="total-label">Total</div>
-            <div class="total-price">₹<span id="total-price">0</span></div>
-        </div>
-        <button class="checkout-btn" id="checkout-btn" onclick="window.checkoutHandler && window.checkoutHandler(event)">CHECKOUT</button>
-            <!-- Login Modal -->
-            <!-- LOGIN MODAL -->
-<div id="login-modal" class="login-overlay" onclick="hideLoginModal(event)">
-  <div class="login-card" onclick="event.stopPropagation()">
-
-    <h2 class="login-title">Sign in to continue</h2>
-    <p class="login-subtitle">We’ll send an OTP to your phone</p>
-
-    <div class="phone-row">
-      <input id="country-code" type="text" value="+91" placeholder="+91">
-      <input id="phone-number" type="tel" placeholder="Phone number">
-    </div>
-
-    <button class="primary-btn" onclick="window.sendOTP()">Send OTP</button>
-
-  <!-- reCAPTCHA container for Firebase phone auth -->
-  <div id="recaptcha-container" style="margin: 16px 0;"></div>
-
-    <div id="otp-section" class="otp-section">
-      <input id="otp-code" type="text" placeholder="Enter 6-digit OTP">
-      <button class="primary-btn" onclick="window.verifyOTP()">Verify OTP</button>
-    </div>
-
-    <div id="otp-message" class="otp-message"></div>
-
-    <button class="cancel-btn" onclick="window.hideLoginModal()">Cancel</button>
-
+  <div class="cart-header">
+    <button class="back-btn-catalog" onclick="window.parent.closeCart()">
+      <i class="fas fa-arrow-left" style="font-size: 20px; color: #474747;"></i>
+    </button>
+    <button class="clear-cart">CLEAR CART</button>
   </div>
-</div>
 
+  <div class="cart-store">
+    <div class="store-header">
+      <div class="store-name">Jars n' More</div>
+      <div class="store-items"><span id="store-item-count">0</span> ITEMS</div>
+    </div>
+    <div id="cart-items"></div>
+  </div>
+
+  <div class="cart-footer">
+    <div class="cart-summary">
+      <div class="total-label">Total</div>
+      <div class="total-price">₹<span id="total-price">0</span></div>
+    </div>
+    <button class="checkout-btn" id="checkout-btn"
+      onclick="window.checkoutHandler && window.checkoutHandler(event)">CHECKOUT</button>
+    <!-- LOGIN MODAL -->
+    <div id="login-modal" class="login-overlay" onclick="hideLoginModal(event)">
+      <div class="login-card minimal" onclick="event.stopPropagation()">
+
+        <!-- Logo -->
+        <div class="login-logo">
+          <img src="Listerr_logo.png" alt="Logo" class="logo-icon"
+            style="width: 70px; height:70px; object-fit:contain;">
+        </div>
+
+        <h2 class="welcome-title">Namaste</h2>
+        <p class="welcome-subtitle">Create your account to get started</p>
+
+        <!-- Name -->
+        <input id="user-name" type="text" class="input-box" placeholder="Your name" />
+
+        <!-- Phone -->
+        <div class="phone-input">
+          <span class="country-code">+91</span>
+          <input id="phone-number" type="tel" placeholder="Phone number" maxlength="10" />
+        </div>
+
+        <!-- Generate OTP -->
+        <div id="generate-otp-wrapper" style="margin-top: 22px;">
+          <button id="generate-otp-btn" class="primary-btn" onclick="showRecaptchaAndSendOTP()">
+            GENERATE OTP
+          </button>
+        </div>
+
+
+
+        <!-- reCAPTCHA (hidden initially) -->
+        <div id="recaptcha-container" class="recaptcha-box"></div>
+
+        <!-- OTP -->
+        <div id="otp-section" class="otp-section">
+          <input id="otp-code" type="text" class="input-box" placeholder="Enter 6-digit OTP" />
+          <button class="primary-btn" onclick="window.verifyOTP()">
+            VERIFY OTP
+          </button>
+        </div>
+
+        <div id="otp-message" class="otp-message"></div>
+
+      </div>
     </div>
 
     <script type="module" src="firebase-login.js"></script>
-    </div>
+  </div>
 
-    <script>
-        let cart = JSON.parse(localStorage.getItem("cart")) || {};
+  <script>
+    let cart = JSON.parse(localStorage.getItem("cart")) || {};
 
-        function saveCart() { localStorage.setItem("cart", JSON.stringify(cart)); }
+    const phoneInput = document.getElementById("phone-number");
+    const nameInput = document.getElementById("user-name");
 
-        function renderCart() {
-            const cartItems = document.getElementById("cart-items");
-            cartItems.innerHTML = "";
-            let totalQty = 0;
-            let totalPrice = 0;
+    /* ---------------- OTP TRIGGER ---------------- */
 
-            if (Object.keys(cart).length === 0) {
-                cartItems.innerHTML = `<div style="text-align:center; padding: 30px; color:#999; font-size: 14px;">Your cart is empty</div>`;
-                document.querySelector('.checkout-btn').style.opacity = '0.5';
-                document.querySelector('.checkout-btn').style.pointerEvents = 'none';
-            } else {
-                document.querySelector('.checkout-btn').style.opacity = '1';
-                document.querySelector('.checkout-btn').style.pointerEvents = 'auto';
-            }
+    window.showRecaptchaAndSendOTP = function () {
+      const phone = phoneInput.value.trim();
+      const name = nameInput.value.trim();
+      const otpMsg = document.getElementById("otp-message");
 
-            Object.entries(cart).forEach(([name, item]) => {
-                totalQty += item.qty;
-                totalPrice += item.qty * item.price;
-                
-                // 🔥 NEW: Check for image, use generic icon if missing
-                const imgDisplay = item.img ? 
-                    `<img src="${item.img}" class="cart-thumb">` : 
-                    `<div class="cart-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="color:#ccc;"></i></div>`;
+      if (phone.length !== 10 || name.length < 3) {
+        otpMsg.textContent = "Enter valid name and 10-digit phone number.";
+        return;
+      }
 
-                cartItems.innerHTML += `
-                  <div class="cart-item">
-                    ${imgDisplay}
-                    <div class="cart-item-info">
-                      <div class="cart-item-name">${name}</div>
-                      <div class="cart-item-price">₹${item.price} × ${item.qty}</div>
-                    </div>
-                    <div class="qty-box">
-                      <button onclick="updateQty('${name}', -1)">−</button>
-                      <span class="qty-value">${item.qty}</span>
-                      <button onclick="updateQty('${name}', 1)">+</button>
-                    </div>
-                    <div class="remove-btn" onclick="removeItem('${name}')">
-                        <i class="fas fa-trash-alt"></i>
-                    </div>
-                  </div>
-                `;
-            });
+      otpMsg.textContent = "";
 
-            document.getElementById("store-item-count").textContent = totalQty;
-            document.getElementById("total-price").textContent = totalPrice.toFixed(2);
-            
-            try {
-                if (window.parent) {
-                    const parentBadge = window.parent.document.querySelector('.cart-badge');
-                    if (parentBadge) parentBadge.textContent = totalQty;
-                }
-            } catch (e) {}
+      // 🔥 show loading state (handled in firebase-login.js)
+      window.setGenerateOTPLoading(true);
+
+      // 🔥 send OTP (Firebase logic)
+      window.sendOTP();
+    };
+
+    /* ---------------- CART LOGIC ---------------- */
+
+    function saveCart() {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+
+    function renderCart() {
+      const cartItems = document.getElementById("cart-items");
+      cartItems.innerHTML = "";
+
+      let totalQty = 0;
+      let totalPrice = 0;
+
+      if (Object.keys(cart).length === 0) {
+        cartItems.innerHTML = `
+        <div style="text-align:center; padding:30px; color:#999; font-size:14px;">
+          Your cart is empty
+        </div>`;
+        document.querySelector(".checkout-btn").style.opacity = "0.5";
+        document.querySelector(".checkout-btn").style.pointerEvents = "none";
+      } else {
+        document.querySelector(".checkout-btn").style.opacity = "1";
+        document.querySelector(".checkout-btn").style.pointerEvents = "auto";
+      }
+
+      Object.entries(cart).forEach(([name, item]) => {
+        totalQty += item.qty;
+        totalPrice += item.qty * item.price;
+
+        const imgDisplay = item.img
+          ? `<img src="${item.img}" class="cart-thumb">`
+          : `<div class="cart-thumb" style="display:flex;align-items:center;justify-content:center;">
+             <i class="fas fa-image" style="color:#ccc;"></i>
+           </div>`;
+
+        cartItems.innerHTML += `
+        <div class="cart-item">
+          ${imgDisplay}
+          <div class="cart-item-info">
+            <div class="cart-item-name">${name}</div>
+            <div class="cart-item-price">₹${item.price} × ${item.qty}</div>
+          </div>
+          <div class="qty-box">
+            <button onclick="updateQty('${name}', -1)">−</button>
+            <span class="qty-value">${item.qty}</span>
+            <button onclick="updateQty('${name}', 1)">+</button>
+          </div>
+          <div class="remove-btn" onclick="removeItem('${name}')">
+            <i class="fas fa-trash-alt"></i>
+          </div>
+        </div>`;
+      });
+
+      document.getElementById("store-item-count").textContent = totalQty;
+      document.getElementById("total-price").textContent = totalPrice.toFixed(2);
+
+      try {
+        if (window.parent) {
+          const parentBadge = window.parent.document.querySelector(".cart-badge");
+          if (parentBadge) parentBadge.textContent = totalQty;
         }
+      } catch (e) { }
+    }
 
-        function updateQty(name, delta) {
-            if (cart[name]) {
-                cart[name].qty += delta;
-                if (cart[name].qty <= 0) delete cart[name];
-                saveCart();
-                renderCart();
-            }
-        }
+    function updateQty(name, delta) {
+      if (!cart[name]) return;
+      cart[name].qty += delta;
+      if (cart[name].qty <= 0) delete cart[name];
+      saveCart();
+      renderCart();
+    }
 
-        function removeItem(name) {
-            delete cart[name];
-            saveCart();
-            renderCart();
-        }
+    function removeItem(name) {
+      delete cart[name];
+      saveCart();
+      renderCart();
+    }
 
-        document.querySelector(".clear-cart").onclick = () => {
-            if(confirm('Clear entire cart?')) {
-                cart = {};
-                saveCart();
-                renderCart();
-            }
-        };
-
+    document.querySelector(".clear-cart").onclick = () => {
+      if (confirm("Clear entire cart?")) {
+        cart = {};
+        saveCart();
         renderCart();
-    </script>
+      }
+    };
+
+    renderCart();
+  </script>
+
 </body>
+
 </html>
