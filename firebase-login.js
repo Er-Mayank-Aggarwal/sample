@@ -132,7 +132,7 @@ otpSection.style.animation = "slideUp 0.25s ease";
     .catch((error) => {
       console.error(error);
       document.getElementById("otp-message").textContent =
-        error.message || "Failed to send OTP. Try again.";
+        "Failed to send OTP. Try again.";
 
       // 🔁 Restore button
       setGenerateOTPLoading(false);
