@@ -278,56 +278,7 @@
       white-space: nowrap;
     }
 
-    /* Phone number input */
-    .phone-input input {
-      /* Prevent autofill/cached values from breaking style */
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      background: transparent !important;
-      transition: background 0s;
-    }
-
-    .phone-input input:-webkit-autofill,
-    .phone-input input:-webkit-autofill:focus,
-    .phone-input input:-webkit-autofill:hover,
-    .phone-input input:-webkit-autofill:active {
-      -webkit-box-shadow: 0 0 0 1000px #eef5ff inset !important;
-      box-shadow: 0 0 0 1000px #eef5ff inset !important;
-      border-radius: 0 !important;
-      background: #eef5ff !important;
-      color: #222 !important;
-      caret-color: #222 !important;
-    }
-
-    /* Autofill fix for Chrome, Safari, Edge */
-    .phone-input input:-webkit-autofill,
-    .phone-input input:-webkit-autofill:focus,
-    .phone-input input:-webkit-autofill:hover,
-    .phone-input input:-webkit-autofill:active {
-      -webkit-box-shadow: 0 0 0 1000px #eef5ff inset !important;
-      box-shadow: 0 0 0 1000px #eef5ff inset !important;
-      border-radius: 0 !important;
-      background: #eef5ff !important;
-      color: #222 !important;
-      caret-color: #222 !important;
-    }
-
-    /* Autofill fix for Firefox */
-    .phone-input input:-moz-autofill {
-      box-shadow: 0 0 0 1000px #eef5ff inset !important;
-      border-radius: 0 !important;
-      background: #eef5ff !important;
-      color: #222 !important;
-      caret-color: #222 !important;
-    }
-
-    .phone-input input:focus {
-      border: none;
-      outline: none;
-      background: transparent;
-      border-radius: 0;
-      box-shadow: none;
-    }
+    
 
 
     /* Buttons */
@@ -543,7 +494,7 @@
         </div>
 
         <!-- Generate OTP -->
-        <div id="generate-otp-wrapper" style="margin-top: 22px;">
+        <div id="generate-otp-wrapper" style="margin-top: 10px;">
           <button id="generate-otp-btn" class="primary-btn" onclick="showRecaptchaAndSendOTP()">
             GENERATE OTP
           </button>
