@@ -42,7 +42,7 @@
       </div>
 
       <!-- ================= CROISSANTS ================= -->
-      <div class="category-section">
+      <div class="category-section" id="croissant-section">
         <h3 class="category-title">🥐 Croissant Specials</h3>
         <div class="products-grid">
 
@@ -138,7 +138,7 @@
       </div>
 
       <!-- ================= BEVERAGES ================= -->
-      <div class="category-section">
+      <div class="category-section" id="beverages-section">
         <h3 class="category-title">☕ Beverages</h3>
         <div class="products-grid">
 
@@ -186,7 +186,7 @@
       </div>
 
       <!-- ================= PASTRIES ================= -->
-      <div class="category-section">
+      <div class="category-section" id="pastries-section">
         <h3 class="category-title">🥐 Fresh Pastries</h3>
         <div class="products-grid">
 
@@ -268,7 +268,31 @@
     </div>
   </main>
 
+  <!-- Floating Category Menu Button -->
+  <button id="floatingCategoryBtn" class="floating-category-btn" aria-label="Show Categories">
+    <span class="menu-icon">
+      <svg width="32" height="32" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="16" fill="#253A5E"/>
+        <rect x="9" y="13" width="14" height="2.2" rx="1" fill="#fff"/>
+        <rect x="9" y="17" width="14" height="2.2" rx="1" fill="#fff"/>
+        <rect x="9" y="21" width="14" height="2.2" rx="1" fill="#fff"/>
+      </svg>
+    </span>
+  </button>
+
+  <!-- Category Modal -->
+  <div id="categoryModal" class="category-modal" style="display:none;">
+    <div class="category-modal-content">
+      <ul id="modalCategoryList">
+        <li><a href="#croissant-section" class="modal-category-link">Croissant Specials <span class="category-count" id="count-croissant"></span></a></li>
+        <li><a href="#beverages-section" class="modal-category-link">Beverages <span class="category-count" id="count-beverages"></span></a></li>
+        <li><a href="#pastries-section" class="modal-category-link">Fresh Pastries <span class="category-count" id="count-pastries"></span></a></li>
+      </ul>
+    </div>
+  </div>
+
   <script src="script.js"></script>
+  <!-- ...existing code... -->
 </body>
 
 </html>

@@ -1,3 +1,52 @@
+// Floating category menu logic
+document.addEventListener('DOMContentLoaded', function () {
+  // ...existing code...
+  const floatingBtn = document.getElementById('floatingCategoryBtn');
+  const categoryModal = document.getElementById('categoryModal');
+  const modalLinks = document.querySelectorAll('.modal-category-link');
+
+  // Show modal on button click
+  if (floatingBtn && categoryModal) {
+    floatingBtn.addEventListener('click', function (e) {
+      categoryModal.style.display = 'block';
+    });
+    // Hide modal when clicking outside
+    categoryModal.addEventListener('click', function (e) {
+      if (e.target === categoryModal) {
+        categoryModal.style.display = 'none';
+      }
+    });
+    // Hide modal on ESC
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        categoryModal.style.display = 'none';
+      }
+    });
+    // Scroll to category and close modal
+    modalLinks.forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').substring(1);
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) {
+          targetSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        categoryModal.style.display = 'none';
+      });
+    });
+  }
+
+  // Category counts
+  function updateCategoryCounts() {
+    const croissantCount = document.querySelectorAll('#croissant-section .product-card').length;
+    const beveragesCount = document.querySelectorAll('#beverages-section .product-card').length;
+    const pastriesCount = document.querySelectorAll('#pastries-section .product-card').length;
+    document.getElementById('count-croissant').textContent = croissantCount;
+    document.getElementById('count-beverages').textContent = beveragesCount;
+    document.getElementById('count-pastries').textContent = pastriesCount;
+  }
+  updateCategoryCounts();
+});
 document.addEventListener('DOMContentLoaded', function () {
 
   /* ================================

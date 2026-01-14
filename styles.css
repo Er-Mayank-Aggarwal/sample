@@ -1,3 +1,81 @@
+/* Floating Category Button */
+.floating-category-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 32px;
+  z-index: 1001;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 1px 2px 8px rgba(0,0,0,0.12);
+  border-radius: 50%;
+  padding: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.floating-category-btn .menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Category Modal */
+.category-modal {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.18);
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.category-modal-content {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  padding: 24px 25px;
+  min-width: 260px;
+  max-width: 90vw;
+  max-height: 60vh;
+  overflow-y: auto;
+  margin: auto;
+  margin-top: 50%;
+}
+.category-modal-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.category-modal-content li {
+  margin-bottom: 16px;
+}
+.modal-category-link {
+  text-decoration: none;
+  color: #253A5E;
+  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  transition: background 0.2s;
+}
+.modal-category-link:hover {
+  background: #F3F3F5;
+  border-radius: 8px;
+}
+.category-count {
+  color: #474747;
+  font-size: 16px;
+  margin-left: 16px;
+  font-weight: 500;
+}
 * {
   margin: 0;
   padding: 0;
