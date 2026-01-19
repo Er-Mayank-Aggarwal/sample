@@ -11,25 +11,20 @@ const StoreService = {
      (with caching + iframe safety)
   =============================== */
   getStoreId: () => {
-    // 1) Return cached value if we already have it
     if (_cachedStoreId) {
-      console.log("[StoreService] Using cached store id:", _cachedStoreId);
       return _cachedStoreId;
     }
 
-    // 2) Try query param (?store=2)
+    // Try query param (?store=2)
     const params = new URLSearchParams(window.location.search);
     const idFromQuery = params.get("store");
-
-    console.log("[StoreService] URL search:", window.location.search);
-    console.log("[StoreService] Parsed store id:", idFromQuery);
 
     if (idFromQuery) {
       _cachedStoreId = idFromQuery;
       return idFromQuery;
     }
 
-    // 3) Try parent window (iframe case)
+    // Try parent window (iframe case)
     try {
       if (window.parent && window.parent !== window) {
         const parentParams = new URLSearchParams(
@@ -37,22 +32,16 @@ const StoreService = {
         );
         const idFromParent = parentParams.get("store");
 
-        console.log("[StoreService] Parent URL search:", window.parent.location.search);
-        console.log("[StoreService] Parent store id:", idFromParent);
-
         if (idFromParent) {
           _cachedStoreId = idFromParent;
           return idFromParent;
         }
       }
-    } catch (e) {
-      // Cross-origin safety
-    }
+    } catch (e) {}
 
-    // 4) Try localStorage (last resort)
+    // Last resort: localStorage
     const stored = localStorage.getItem("active_store_id");
     if (stored) {
-      console.log("[StoreService] Using stored store id:", stored);
       _cachedStoreId = stored;
       return stored;
     }
@@ -62,6 +51,7 @@ const StoreService = {
 
   /* ===============================
      2. FETCH STORE DATA (AUTH + API)
+     USES: /api/v1/stores/{id}
   =============================== */
   getStoreData: async () => {
     const storeId = StoreService.getStoreId();
@@ -73,7 +63,7 @@ const StoreService = {
       throw new Error("Missing store ID in URL (?store=2)");
     }
 
-    // Persist for iframe / reload safety
+    // Persist store id for iframe safety
     localStorage.setItem("active_store_id", storeId);
 
     console.log(`[StoreService] Loading store ${storeId}`);
@@ -82,75 +72,38 @@ const StoreService = {
       Authorization: `Bearer ${token}`
     };
 
-    /* ---------- 1. GET ALL STORES ---------- */
-    const storeRes = await fetch(`${BASE_URL}/api/v1/stores`, { headers });
-
-    if (!storeRes.ok) {
-      throw new Error("Failed to fetch stores");
-    }
-
-    const storeJson = await storeRes.json();
-    const allStores = Array.isArray(storeJson)
-      ? storeJson
-      : storeJson.data || storeJson.stores || [];
-
-    const store = allStores.find(s => String(s.id) === String(storeId));
-
-    if (!store) {
-      throw new Error(`Store ${storeId} not found`);
-    }
-
-    /* ---------- 2. GET ALL CATALOGS ---------- */
-    const catalogRes = await fetch(`${BASE_URL}/api/v1/catalogs`, { headers });
-
-    if (!catalogRes.ok) {
-      throw new Error("Failed to fetch catalogs");
-    }
-
-    const catalogJson = await catalogRes.json();
-    const allCatalogs = Array.isArray(catalogJson)
-      ? catalogJson
-      : catalogJson.data || catalogJson.catalogs || [];
-
-    const catalogs = allCatalogs.filter(
-      c => String(c.store_id) === String(storeId)
+    /* ---------- 1. GET STORE WITH CATEGORIES + PRODUCTS ---------- */
+    const storeRes = await fetch(
+      `${BASE_URL}/api/v1/stores/${storeId}`,
+      { headers }
     );
 
-    /* ---------- 3. GET ALL PRODUCTS ---------- */
-    const productRes = await fetch(`${BASE_URL}/api/v1/products`, { headers });
-
-    if (!productRes.ok) {
-      throw new Error("Failed to fetch products");
+    if (!storeRes.ok) {
+      throw new Error("Failed to fetch store data");
     }
 
-    const productJson = await productRes.json();
-    const allProducts = Array.isArray(productJson)
-      ? productJson
-      : productJson.data || productJson.products || [];
+    const store = await storeRes.json();
 
-    /* ---------- 4. GROUP PRODUCTS BY CATALOG ---------- */
-    const categories = catalogs.map(cat => {
-      const products = allProducts.filter(
-        p => String(p.catalog_id) === String(cat.id)
-      );
+    if (!store || !store.categories) {
+      throw new Error("Invalid store payload from API");
+    }
 
-      return {
-        id: cat.id,
-        name: cat.name,
-        products: products.map(p => ({
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          mrp: p.mrp,
-          unit: p.unit,
-          image: p.image_url || "",
-          discount: p.discount || null,
-          stock: p.stock
-        }))
-      };
-    });
+    /* ---------- 2. NORMALIZE STORE OBJECT ---------- */
+    const categories = store.categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      products: (cat.products || []).map(p => ({
+        id: p.id || null,
+        name: p.name,
+        price: p.price,
+        mrp: p.mrp,
+        unit: p.unit,
+        image: p.image || p.image_url || "",
+        discount: p.discount || null,
+        stock: p.stock || null
+      }))
+    }));
 
-    /* ---------- 5. NORMALIZED STORE OBJECT ---------- */
     return {
       id: store.id,
       name: store.name,
