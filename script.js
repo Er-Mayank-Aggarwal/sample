@@ -1,3 +1,5 @@
+// 🔥 FORCE store context for cart isolation
+
 document.addEventListener('DOMContentLoaded', async function () {
 
   /* =========================================
@@ -16,7 +18,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // Handle loading/error state
   if (!storeData || !storeData.categories) {
-    if (productsSection) productsSection.innerHTML = "<div style='text-align:center; padding:20px; color:#666;'>Menu loading...</div>";
+    if (productsSection) {
+      productsSection.innerHTML =
+        "<div style='text-align:center; padding:20px; color:#666;'>Menu loading...</div>";
+    }
     return;
   }
 
@@ -46,7 +51,11 @@ document.addEventListener('DOMContentLoaded', async function () {
       const imgSrc = prod.image ? prod.image : 'fallback.jpeg';
 
       const card = document.createElement('div');
-      card.className = 'product-card';
+card.className = 'product-card';
+
+// 🔥 Attach real category to card
+card.dataset.category = category.name;
+
       
       card.innerHTML = `
         <div class="product-image-container">
@@ -65,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async function () {
            </div>
         </div>
       `;
+
       grid.appendChild(card);
     });
 
@@ -82,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   });
 
   /* =========================================
-     2. CART INTERACTION (THE FIX IS HERE)
+     2. CART INTERACTION
   ========================================= */
   
   function getButtonHtml(qty) {
@@ -97,10 +107,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     return `<button class="add-btn">ADD</button>`;
   }
 
-  // Global Click Listener
+  // Global Click Listener for Cart Buttons
   document.addEventListener('click', function (e) {
     
-    // Ignore non-interaction clicks
     if (!e.target.matches('.add-btn, .plus, .minus')) return;
 
     const card = e.target.closest('.product-card');
@@ -115,7 +124,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     // --- ADD CLICK ---
     if (e.target.classList.contains('add-btn')) {
       cart[name] = { price, qty: 1, img };
-      // FIX: Replace ONLY the button with the controls (OuterHTML), don't touch the price
       e.target.outerHTML = getButtonHtml(1);
     }
 
@@ -130,7 +138,6 @@ document.addEventListener('DOMContentLoaded', async function () {
       cart[name].qty--;
       if (cart[name].qty <= 0) {
         delete cart[name];
-        // FIX: Find the .qty-control div and replace it with the ADD button
         const controlDiv = e.target.closest('.qty-control');
         controlDiv.outerHTML = `<button class="add-btn">ADD</button>`;
       } else {
@@ -138,13 +145,65 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     }
 
-    // Save & Update Badge
     window.StoreService.saveCart(cart);
     updateParentBadge();
   });
 
+/* =========================================
+   3. PRODUCT CARD NAVIGATION (FINAL)
+========================================= */
+
+document.addEventListener('click', function (e) {
+
+  const card = e.target.closest('.product-card');
+  if (!card) return;
+
+  // Ignore clicks on cart controls
+  if (e.target.matches('.add-btn, .plus, .minus')) return;
+
+  const name = card.querySelector('.product-name')?.textContent || '';
+  const priceRaw = card.querySelector('.current-price')?.textContent || '';
+  const price = parseFloat(priceRaw.replace(/[^\d.]/g, '')) || 0;
+  const img = card.querySelector('.product-image')?.src || '';
+  const mrpRaw = card.querySelector('.original-price')?.textContent || '';
+  const mrp = parseFloat(mrpRaw.replace(/[^\d.]/g, '')) || null;
+  const unit = card.querySelector('.product-quantity')?.textContent || '1 Unit';
+
+  // Find product data from rendered storeData
+const categoryName = card.dataset.category || null;
+
+
+  const category = storeData.categories.find(c => c.name === categoryName);
+  const prod = category?.products.find(p => p.name === name);
+
+const selectedProduct = {
+  name,
+  price,
+  mrp,
+  unit,
+  image: img,
+  discount: prod?.discount || null,
+
+  shelf_life: prod?.shelf_life || null,
+  store_name: storeData.name,
+
+  store_id: StoreService.getStoreId(),
+  category: categoryName || null
+};
+
+// 🔥 THIS WAS MISSING
+localStorage.setItem(
+  'selected_product',
+  JSON.stringify(selectedProduct)
+);
+
+window.location.href = 'product.html';
+});
+
+
+
   /* =========================================
-     3. UTILS & UI LOGIC
+     4. UTILS & UI LOGIC
   ========================================= */
 
   function updateParentBadge() {
@@ -158,7 +217,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     } catch (e) { }
   }
   
-  // Initial Badge Check
   updateParentBadge();
 
   // Floating Menu Logic
@@ -170,18 +228,18 @@ document.addEventListener('DOMContentLoaded', async function () {
     categoryModal.addEventListener('click', (e) => {
       if (e.target === categoryModal) categoryModal.style.display = 'none';
     });
-    // Event delegation for links
+
     if (modalList) {
-        modalList.addEventListener('click', (e) => {
-            const link = e.target.closest('.modal-category-link');
-            if (link) {
-                e.preventDefault();
-                const targetId = link.getAttribute('href').substring(1);
-                const el = document.getElementById(targetId);
-                if(el) el.scrollIntoView({behavior:'smooth'});
-                categoryModal.style.display = 'none';
-            }
-        });
+      modalList.addEventListener('click', (e) => {
+        const link = e.target.closest('.modal-category-link');
+        if (link) {
+          e.preventDefault();
+          const targetId = link.getAttribute('href').substring(1);
+          const el = document.getElementById(targetId);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+          categoryModal.style.display = 'none';
+        }
+      });
     }
   }
 
@@ -191,15 +249,18 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (gridBtn) {
     gridBtn.addEventListener('click', () => {
       isList = !isList;
-      document.querySelectorAll('.products-grid').forEach(g => g.classList.toggle('list-view', isList));
-      gridBtn.innerHTML = isList ? '<i class="fas fa-th-large"></i>' : '<i class="fas fa-list"></i>';
+      document.querySelectorAll('.products-grid')
+        .forEach(g => g.classList.toggle('list-view', isList));
+      gridBtn.innerHTML = isList
+        ? '<i class="fas fa-th-large"></i>'
+        : '<i class="fas fa-list"></i>';
     });
   }
 
   // Search
   const searchInput = document.querySelector('.search-input');
   if (searchInput) {
-    searchInput.addEventListener('input', function() {
+    searchInput.addEventListener('input', function () {
       const term = this.value.toLowerCase();
       document.querySelectorAll('.category-section').forEach(section => {
         let hasVisible = false;
@@ -208,9 +269,10 @@ document.addEventListener('DOMContentLoaded', async function () {
           const show = name.includes(term);
           card.style.display = show ? '' : 'none';
           if (show) hasVisible = true;
-          if (show && isList) card.closest('.products-grid').classList.add('list-view');
+          if (show && isList) {
+            card.closest('.products-grid').classList.add('list-view');
+          }
         });
-        // Hide category section if no visible products
         section.style.display = hasVisible ? '' : 'none';
       });
     });

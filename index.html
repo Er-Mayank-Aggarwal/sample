@@ -412,7 +412,7 @@
 
     <div id="catalog-drawer">
       <div class="catalog-header">
-        <button class="back-btn-catalog" onclick="closeCatalog()">
+        <button class="back-btn-catalog" onclick="handleBack()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="#3C4043" />
           </svg>
@@ -498,23 +498,7 @@
     }
 
     // 4. Open Product Page (90% Drawer)
-    function openProduct() {
-      isProductView = true; // Mark that we are viewing a product
-
-      const content = document.querySelector('.catalog-content');
-
-      // Keep headers visible (since it's a 90% popup)
-      document.querySelector('.app-header').style.display = 'flex';
-      document.querySelector('.catalog-header').style.display = 'flex';
-
-      // Set Drawer to 90%
-      const drawer = document.getElementById('catalog-drawer');
-      drawer.style.height = '90%';
-      drawer.style.borderRadius = '25px 25px 0 0';
-
-      content.innerHTML = '<iframe src="product.html" style="width:100%; height:100%; border:none;"></iframe>';
-      drawer.classList.add('open');
-    }
+    
 
     // 5. Helper function for product.html internal back button
     function closeProduct() {
@@ -525,6 +509,23 @@
     function closeCart() {
       openCatalog();
     }
+
+    window.isProductView = false; // default
+
+function handleBack() {
+  const iframe = document.querySelector("#catalog-drawer iframe");
+
+  // 🧠 If product page is open, go back to menu only
+  if (window.isProductView && iframe) {
+    iframe.src = "Catalog.html";   // back to menu
+    window.isProductView = false;  // reset state
+    return;
+  }
+
+  // 🚪 Otherwise, close the whole catalog drawer
+  closeCatalog();
+}
+
   </script>
 
 </body>
