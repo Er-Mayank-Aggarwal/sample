@@ -10,6 +10,10 @@ const StoreService = {
   getStoreId: () => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("store");
+
+    console.log("[StoreService] URL search:", window.location.search);
+    console.log("[StoreService] Parsed store id:", id);
+
     return id;
   },
 
@@ -37,9 +41,7 @@ const StoreService = {
     };
 
     /* ---------- 1. GET ALL STORES ---------- */
-    const storeRes = await fetch(`${BASE_URL}/api/v1/stores`, {
-      headers
-    });
+    const storeRes = await fetch(`${BASE_URL}/api/v1/stores`, { headers });
 
     if (!storeRes.ok) {
       throw new Error("Failed to fetch stores");
@@ -57,9 +59,7 @@ const StoreService = {
     }
 
     /* ---------- 2. GET ALL CATALOGS ---------- */
-    const catalogRes = await fetch(`${BASE_URL}/api/v1/catalogs`, {
-      headers
-    });
+    const catalogRes = await fetch(`${BASE_URL}/api/v1/catalogs`, { headers });
 
     if (!catalogRes.ok) {
       throw new Error("Failed to fetch catalogs");
@@ -75,9 +75,7 @@ const StoreService = {
     );
 
     /* ---------- 3. GET ALL PRODUCTS ---------- */
-    const productRes = await fetch(`${BASE_URL}/api/v1/products`, {
-      headers
-    });
+    const productRes = await fetch(`${BASE_URL}/api/v1/products`, { headers });
 
     if (!productRes.ok) {
       throw new Error("Failed to fetch products");
