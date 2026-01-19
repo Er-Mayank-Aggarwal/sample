@@ -3,18 +3,61 @@
 const BASE_URL =
   "https://listerrboardecom-asanb9fzg4ghbza2.centralindia-01.azurewebsites.net";
 
+let _cachedStoreId = null;
+
 const StoreService = {
   /* ===============================
      1. GET STORE ID FROM URL
+     (with caching + iframe safety)
   =============================== */
   getStoreId: () => {
+    // 1) Return cached value if we already have it
+    if (_cachedStoreId) {
+      console.log("[StoreService] Using cached store id:", _cachedStoreId);
+      return _cachedStoreId;
+    }
+
+    // 2) Try query param (?store=2)
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("store");
+    const idFromQuery = params.get("store");
 
     console.log("[StoreService] URL search:", window.location.search);
-    console.log("[StoreService] Parsed store id:", id);
+    console.log("[StoreService] Parsed store id:", idFromQuery);
 
-    return id;
+    if (idFromQuery) {
+      _cachedStoreId = idFromQuery;
+      return idFromQuery;
+    }
+
+    // 3) Try parent window (iframe case)
+    try {
+      if (window.parent && window.parent !== window) {
+        const parentParams = new URLSearchParams(
+          window.parent.location.search
+        );
+        const idFromParent = parentParams.get("store");
+
+        console.log("[StoreService] Parent URL search:", window.parent.location.search);
+        console.log("[StoreService] Parent store id:", idFromParent);
+
+        if (idFromParent) {
+          _cachedStoreId = idFromParent;
+          return idFromParent;
+        }
+      }
+    } catch (e) {
+      // Cross-origin safety
+    }
+
+    // 4) Try localStorage (last resort)
+    const stored = localStorage.getItem("active_store_id");
+    if (stored) {
+      console.log("[StoreService] Using stored store id:", stored);
+      _cachedStoreId = stored;
+      return stored;
+    }
+
+    return null;
   },
 
   /* ===============================
@@ -30,9 +73,8 @@ const StoreService = {
       throw new Error("Missing store ID in URL (?store=2)");
     }
 
-    if (!token) {
-      throw new Error("User not authenticated");
-    }
+    // Persist for iframe / reload safety
+    localStorage.setItem("active_store_id", storeId);
 
     console.log(`[StoreService] Loading store ${storeId}`);
 
