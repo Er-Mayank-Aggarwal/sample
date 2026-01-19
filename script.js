@@ -1,264 +1,218 @@
-// Floating category menu logic
-document.addEventListener('DOMContentLoaded', function () {
-  // ...existing code...
-  const floatingBtn = document.getElementById('floatingCategoryBtn');
-  const categoryModal = document.getElementById('categoryModal');
-  const modalLinks = document.querySelectorAll('.modal-category-link');
+document.addEventListener('DOMContentLoaded', async function () {
 
-  // Show modal on button click
-  if (floatingBtn && categoryModal) {
-    floatingBtn.addEventListener('click', function (e) {
-      categoryModal.style.display = 'block';
-    });
-    // Hide modal when clicking outside
-    categoryModal.addEventListener('click', function (e) {
-      if (e.target === categoryModal) {
-        categoryModal.style.display = 'none';
-      }
-    });
-    // Hide modal on ESC
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        categoryModal.style.display = 'none';
-      }
-    });
-    // Scroll to category and close modal
-    modalLinks.forEach(function (link) {
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href').substring(1);
-        const targetSection = document.getElementById(targetId);
-        if (targetSection) {
-          targetSection.scrollIntoView({ behavior: 'smooth' });
-        }
-        categoryModal.style.display = 'none';
-      });
-    });
+  /* =========================================
+     1. FETCH DATA & RENDER CONTENT
+  ========================================= */
+  console.log("Script initializing...");
+  
+  if (!window.StoreService) {
+    console.error("StoreService missing! Check Catalog.html");
+    return;
   }
 
-  // Category counts
-  function updateCategoryCounts() {
-    const croissantCount = document.querySelectorAll('#croissant-section .product-card').length;
-    const beveragesCount = document.querySelectorAll('#beverages-section .product-card').length;
-    const pastriesCount = document.querySelectorAll('#pastries-section .product-card').length;
-    document.getElementById('count-croissant').textContent = croissantCount;
-    document.getElementById('count-beverages').textContent = beveragesCount;
-    document.getElementById('count-pastries').textContent = pastriesCount;
-  }
-  updateCategoryCounts();
-});
-document.addEventListener('DOMContentLoaded', function () {
+  const storeData = await window.StoreService.getStoreData();
+  const productsSection = document.getElementById('products-section');
+  const modalList = document.getElementById('modalCategoryList'); 
 
-  /* ================================
-     STATE
-  ================================= */
-  let cart = JSON.parse(localStorage.getItem("cart")) || {};
-  let isList = false;
-
-  function saveCart() {
-    localStorage.setItem("cart", JSON.stringify(cart));
+  // Handle loading/error state
+  if (!storeData || !storeData.categories) {
+    if (productsSection) productsSection.innerHTML = "<div style='text-align:center; padding:20px; color:#666;'>Menu loading...</div>";
+    return;
   }
 
-  function getCartCount() {
-    return Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
-  }
+  // Clear existing content
+  if (productsSection) productsSection.innerHTML = '';
+  if (modalList) modalList.innerHTML = '';
 
-  function updateCartBadge() {
-    const count = getCartCount();
-    const badge = document.querySelector('.cart-badge');
-    if (badge) badge.textContent = count;
-    try {
-      if (window.parent !== window) {
-        const parentBadge = window.parent.document.querySelector('.cart-badge');
-        if (parentBadge) parentBadge.textContent = count;
-      }
-    } catch (e) {}
-  }
-
-  /* ================================
-     ADD / QTY CONTROL
-  ================================= */
-  document.addEventListener('click', function (e) {
-    const card = e.target.closest('.product-card');
-    if (!card) return;
-
-    const name = card.querySelector('.product-name').textContent;
+  // RENDER LOOP
+  storeData.categories.forEach(category => {
     
-    // Get Price (Numbers only)
-    const priceRaw = card.querySelector('.current-price').textContent;
-    const price = parseFloat(priceRaw.replace(/[^\d.]/g, ''));
+    // Create Category Section
+    const section = document.createElement('div');
+    section.className = 'category-section';
+    section.id = `${category.id}-section`;
     
-    // Get Image Source
-    const imgEl = card.querySelector('.product-image');
-    const imgSrc = imgEl ? imgEl.src : ''; 
+    section.innerHTML = `
+      <h3 class="category-title">${category.name}</h3>
+      <div class="products-grid"></div> 
+    `;
+    
+    const grid = section.querySelector('.products-grid');
 
-    // 🔥 FIX: Capture the "Original Price" (Strike-through) so we don't lose it
-    const originalPriceEl = card.querySelector('.original-price');
-    const originalPriceHTML = originalPriceEl ? originalPriceEl.outerHTML : '';
+    // Create Product Cards
+    category.products.forEach(prod => {
+      const cart = window.StoreService.getCart();
+      const currentQty = cart[prod.name] ? cart[prod.name].qty : 0;
+      const imgSrc = prod.image ? prod.image : 'fallback.jpeg';
 
-    /* ADD BUTTON CLICK */
-    if (e.target.classList.contains('add-btn')) {
-      cart[name] = { price, qty: 1, img: imgSrc };
+      const card = document.createElement('div');
+      card.className = 'product-card';
       
-      saveCart();
-      updateCartBadge();
-
-      const pricing = e.target.closest('.product-pricing');
-      pricing.innerHTML = `
-        <div class="price-stack">
-          <span class="current-price">${priceRaw}</span>
-          ${originalPriceHTML} 
+      card.innerHTML = `
+        <div class="product-image-container">
+           ${prod.discount ? `<div class="discount-badge">${prod.discount}</div>` : ''}
+           <img src="${imgSrc}" class="product-image" alt="${prod.name}" onerror="this.src='fallback.jpeg'">
         </div>
-        <div class="qty-control">
-          <button class="qty-btn minus">−</button>
-          <span class="qty-value">1</span>
-          <button class="qty-btn plus">+</button>
+        <div class="product-info">
+           <div class="product-name">${prod.name}</div>
+           <div class="product-quantity">${prod.unit || '1 Unit'}</div>
+           <div class="product-pricing">
+              <div class="price-stack">
+                 <span class="current-price">₹${prod.price}</span>
+                 ${prod.mrp ? `<span class="original-price">₹${prod.mrp}</span>` : ''}
+              </div>
+              ${getButtonHtml(currentQty)} 
+           </div>
         </div>
       `;
+      grid.appendChild(card);
+    });
+
+    if (productsSection) productsSection.appendChild(section);
+
+    // Update Floating Menu
+    if (modalList) {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <a href="#${category.id}-section" class="modal-category-link">
+          ${category.name} <span class="category-count">${category.products.length}</span>
+        </a>`;
+      modalList.appendChild(li);
+    }
+  });
+
+  /* =========================================
+     2. CART INTERACTION (THE FIX IS HERE)
+  ========================================= */
+  
+  function getButtonHtml(qty) {
+    if (qty > 0) {
+      return `
+        <div class="qty-control">
+          <button class="qty-btn minus">−</button>
+          <span class="qty-value">${qty}</span>
+          <button class="qty-btn plus">+</button>
+        </div>`;
+    }
+    return `<button class="add-btn">ADD</button>`;
+  }
+
+  // Global Click Listener
+  document.addEventListener('click', function (e) {
+    
+    // Ignore non-interaction clicks
+    if (!e.target.matches('.add-btn, .plus, .minus')) return;
+
+    const card = e.target.closest('.product-card');
+    const name = card.querySelector('.product-name').textContent;
+    const priceRaw = card.querySelector('.current-price').textContent;
+    const price = parseFloat(priceRaw.replace(/[^\d.]/g, ''));
+    const imgEl = card.querySelector('.product-image');
+    const img = imgEl ? imgEl.src : 'fallback.jpeg';
+    
+    let cart = window.StoreService.getCart();
+
+    // --- ADD CLICK ---
+    if (e.target.classList.contains('add-btn')) {
+      cart[name] = { price, qty: 1, img };
+      // FIX: Replace ONLY the button with the controls (OuterHTML), don't touch the price
+      e.target.outerHTML = getButtonHtml(1);
     }
 
-    /* PLUS CLICK */
-    if (e.target.classList.contains('plus')) {
+    // --- PLUS CLICK ---
+    else if (e.target.classList.contains('plus')) {
       cart[name].qty++;
-      saveCart();
-      updateCartBadge();
       e.target.parentElement.querySelector('.qty-value').textContent = cart[name].qty;
     }
 
-    /* MINUS CLICK */
-    if (e.target.classList.contains('minus')) {
-      cart[name].qty--; 
-      
+    // --- MINUS CLICK ---
+    else if (e.target.classList.contains('minus')) {
+      cart[name].qty--;
       if (cart[name].qty <= 0) {
         delete cart[name];
-        saveCart();
-        updateCartBadge();
-
-        // 🔥 FIX: When reverting to "ADD", put the Original Price back too!
-        e.target.closest('.product-pricing').innerHTML = `
-          <div class="price-stack">
-            <span class="current-price">${priceRaw}</span>
-            ${originalPriceHTML}
-          </div>
-          <button class="add-btn">ADD</button>
-        `;
+        // FIX: Find the .qty-control div and replace it with the ADD button
+        const controlDiv = e.target.closest('.qty-control');
+        controlDiv.outerHTML = `<button class="add-btn">ADD</button>`;
       } else {
-        saveCart();
-        updateCartBadge();
         e.target.parentElement.querySelector('.qty-value').textContent = cart[name].qty;
       }
     }
+
+    // Save & Update Badge
+    window.StoreService.saveCart(cart);
+    updateParentBadge();
   });
 
-  /* ================================
-     INIT STATE (Restore UI)
-  ================================= */
-  document.querySelectorAll('.product-card').forEach(card => {
-    const name = card.querySelector('.product-name').textContent;
-    const priceEl = card.querySelector('.current-price');
-    
-    // 🔥 FIX: Capture original price on load too
-    const originalPriceEl = card.querySelector('.original-price');
-    const originalPriceHTML = originalPriceEl ? originalPriceEl.outerHTML : '';
+  /* =========================================
+     3. UTILS & UI LOGIC
+  ========================================= */
 
-    if (cart[name]) {
-      const pricing = card.querySelector('.product-pricing');
-      pricing.innerHTML = `
-        <div class="price-stack">
-          <span class="current-price">${priceEl.textContent}</span>
-          ${originalPriceHTML}
-        </div>
-        <div class="qty-control">
-          <button class="qty-btn minus">−</button>
-          <span class="qty-value">${cart[name].qty}</span>
-          <button class="qty-btn plus">+</button>
-        </div>
-      `;
-    }
-  });
+  function updateParentBadge() {
+    const cart = window.StoreService.getCart();
+    const count = Object.values(cart).reduce((a, b) => a + b.qty, 0);
+    try {
+      if (window.parent) {
+        const badge = window.parent.document.querySelector('.cart-badge');
+        if (badge) badge.textContent = count;
+      }
+    } catch (e) { }
+  }
+  
+  // Initial Badge Check
+  updateParentBadge();
 
-  /* ================================
-     SEARCH & FILTER
-  ================================= */
-  const searchInput = document.querySelector('.search-input');
-  const productCards = document.querySelectorAll('.product-card');
+  // Floating Menu Logic
+  const floatingBtn = document.getElementById('floatingCategoryBtn');
+  const categoryModal = document.getElementById('categoryModal');
 
-  if (searchInput) {
-    searchInput.addEventListener('input', function () {
-      const term = this.value.toLowerCase();
-      productCards.forEach(card => {
-        const name = card.querySelector('.product-name').textContent.toLowerCase();
-        const displayStyle = name.includes(term) ? '' : 'none';
-        card.style.display = displayStyle;
-        if (displayStyle !== 'none' && isList) {
-             card.closest('.products-grid').classList.add('list-view');
-        }
-      });
+  if (floatingBtn && categoryModal) {
+    floatingBtn.addEventListener('click', () => categoryModal.style.display = 'block');
+    categoryModal.addEventListener('click', (e) => {
+      if (e.target === categoryModal) categoryModal.style.display = 'none';
     });
+    // Event delegation for links
+    if (modalList) {
+        modalList.addEventListener('click', (e) => {
+            const link = e.target.closest('.modal-category-link');
+            if (link) {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                const el = document.getElementById(targetId);
+                if(el) el.scrollIntoView({behavior:'smooth'});
+                categoryModal.style.display = 'none';
+            }
+        });
+    }
   }
 
+  // Grid/List Toggle
+  let isList = false;
   const gridBtn = document.querySelector('.grid-view-btn');
-  const grids = document.querySelectorAll('.products-grid');
   if (gridBtn) {
     gridBtn.addEventListener('click', () => {
       isList = !isList;
-      grids.forEach(grid => grid.classList.toggle('list-view', isList));
+      document.querySelectorAll('.products-grid').forEach(g => g.classList.toggle('list-view', isList));
       gridBtn.innerHTML = isList ? '<i class="fas fa-th-large"></i>' : '<i class="fas fa-list"></i>';
     });
   }
 
-  const filterButtons = document.querySelectorAll('.filter-btn');
-  const categorySections = document.querySelectorAll('.category-section');
-  
-  filterButtons.forEach(btn => {
-    btn.addEventListener('click', function () {
-      filterButtons.forEach(b => b.classList.remove('filter-active'));
-      this.classList.add('filter-active');
-      const filter = this.textContent.toLowerCase();
-
-      categorySections.forEach(section => {
-        const title = section.querySelector('.category-title').textContent.toLowerCase();
-        if (filter === 'all' || title.includes(filter)) {
-          section.style.display = 'block';
-        } else {
-          section.style.display = 'none';
-        }
+  // Search
+  const searchInput = document.querySelector('.search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const term = this.value.toLowerCase();
+      document.querySelectorAll('.category-section').forEach(section => {
+        let hasVisible = false;
+        section.querySelectorAll('.product-card').forEach(card => {
+          const name = card.querySelector('.product-name').textContent.toLowerCase();
+          const show = name.includes(term);
+          card.style.display = show ? '' : 'none';
+          if (show) hasVisible = true;
+          if (show && isList) card.closest('.products-grid').classList.add('list-view');
+        });
+        // Hide category section if no visible products
+        section.style.display = hasVisible ? '' : 'none';
       });
     });
-  });
-
-  /* ================================
-     OPEN PRODUCT DETAIL PAGE
-  ================================ */
-  document.addEventListener('click', function(e) {
-      const card = e.target.closest('.product-card');
-      if (!card) return;
-
-      if (e.target.closest('.add-btn') || 
-          e.target.closest('.qty-control') || 
-          e.target.closest('.qty-btn')) {
-          return;
-      }
-
-      const name = card.querySelector('.product-name').textContent;
-      const priceRaw = card.querySelector('.current-price').textContent;
-      const price = parseFloat(priceRaw.replace(/[^\d.]/g, ''));
-      const imageSrc = card.querySelector('.product-image').src;
-
-      const productData = {
-          name: name,
-          price: price,
-          image: imageSrc
-      };
-
-      localStorage.setItem('selectedProduct', JSON.stringify(productData));
-
-      try {
-          window.parent.openProduct();
-      } catch (err) {
-          console.error("Could not open product page via parent", err);
-      }
-  });
-
-  updateCartBadge();
+  }
 });

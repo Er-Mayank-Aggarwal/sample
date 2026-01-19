@@ -12,263 +12,39 @@
 
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="store-service.js"></script>
 </head>
 
 <body>
 
   <main class="main-content">
 
-    <!-- Search -->
     <div class="search-container">
-      <input type="text" class="search-input" placeholder="Search Jars n' More">
+      <input type="text" class="search-input" placeholder="Search products">
     </div>
 
-    <!-- Products -->
-    <div class="products-section">
-
+    <div class="products-section-wrapper">
+      
       <div class="products-header">
-        <h2 class="products-title">Products</h2>
+        <h2 class="products-title">Menu</h2>
         <button class="grid-view-btn" aria-label="Toggle Grid/List View">
-          <img src="https://static.codia.ai/image/2026-01-02/9h5MtrGYGC.png" width="20">
+          <i class="fas fa-list"></i>
         </button>
       </div>
 
-      <!-- Filters -->
-      <div class="category-filters">
+      <!-- <div class="category-filters">
         <button class="filter-btn filter-active">All</button>
-        <button class="filter-btn">Croissant</button>
-        <button class="filter-btn">Beverages</button>
-        <button class="filter-btn">Pastries</button>
-      </div>
+        </div> -->
 
-      <!-- ================= CROISSANTS ================= -->
-      <div class="category-section" id="croissant-section">
-        <h3 class="category-title">🥐 Croissant Specials</h3>
-        <div class="products-grid">
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-              <div class="discount-badge">15% OFF</div>
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Wheel Croissant</h4>
-              <p class="product-quantity">Special Topper</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <div class="price-stack">
-                  <span class="current-price">$6.50</span>
-                  <span class="original-price">$7.65</span>
-                </div>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-              <div class="discount-badge">12% OFF</div>
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Butter Croissant</h4>
-              <p class="product-quantity">Classic</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <div class="price-stack">
-                  <span class="current-price">$5.75</span>
-                  <span class="original-price">$6.50</span>
-                </div>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1598371623022-6e45cfd59aa0?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-              <div class="discount-badge">10% OFF</div>
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Chocolate Croissant</h4>
-              <p class="product-quantity">Dark Choco</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <div class="price-stack">
-                  <span class="current-price">$6.90</span>
-                  <span class="original-price">$7.70</span>
-                </div>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1612198791363-29d4c39a5e8e?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-              <div class="discount-badge">14% OFF</div>
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Tiramisu Croissant</h4>
-              <p class="product-quantity">Coffee Cream</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <div class="price-stack">
-                  <span class="current-price">$7.00</span>
-                  <span class="original-price">$7.95</span>
-                </div>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ================= BEVERAGES ================= -->
-      <div class="category-section" id="beverages-section">
-        <h3 class="category-title">☕ Beverages</h3>
-        <div class="products-grid">
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-              <div class="discount-badge">10% OFF</div>
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Classic Espresso</h4>
-              <p class="product-quantity">Single Shot</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <div class="price-stack">
-                  <span class="current-price">$3.50</span>
-                  <span class="original-price">$3.99</span>
-                </div>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Cappuccino</h4>
-              <p class="product-quantity">Foamy</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <span class="current-price">$4.20</span>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ================= PASTRIES ================= -->
-      <div class="category-section" id="pastries-section">
-        <h3 class="category-title">🥐 Fresh Pastries</h3>
-        <div class="products-grid">
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1589308078059-fb6a3a5c1f1e?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Danish Pastry</h4>
-              <p class="product-quantity">1 Piece</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <span class="current-price">$4.75</span>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Glazed Donut</h4>
-              <p class="product-quantity">1 Piece</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <span class="current-price">$3.50</span>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Chocolate Muffin</h4>
-              <p class="product-quantity">1 Piece</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <span class="current-price">$4.25</span>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image-container">
-              <img src="https://images.unsplash.com/photo-1551986782-d244d7d73338?w=400" class="product-image"
-                loading="lazy" onerror="this.onerror=null;this.src='fallback.jpeg';">
-            </div>
-            <div class="product-info">
-              <h4 class="product-name">Berry Scone</h4>
-              <p class="product-quantity">1 Piece</p>
-              <div class="store-info-small">
-                <i class="fas fa-star"></i><span>Jars n' More</span>
-              </div>
-              <div class="product-pricing">
-                <span class="current-price">$5.25</span>
-                <button class="add-btn">ADD</button>
-              </div>
-            </div>
-          </div>
-
+      <div class="products-section" id="products-section">
+        <div style="text-align:center; padding: 40px; color:#888;">
+          <i class="fas fa-circle-notch fa-spin"></i> Loading Menu...
         </div>
       </div>
 
     </div>
   </main>
 
-  <!-- Floating Category Menu Button -->
   <button id="floatingCategoryBtn" class="floating-category-btn" aria-label="Show Categories">
     <span class="menu-icon">
       <svg width="32" height="32" viewBox="0 0 32 32">
@@ -280,19 +56,14 @@
     </span>
   </button>
 
-  <!-- Category Modal -->
   <div id="categoryModal" class="category-modal" style="display:none;">
     <div class="category-modal-content">
-      <ul id="modalCategoryList">
-        <li><a href="#croissant-section" class="modal-category-link">Croissant Specials <span class="category-count" id="count-croissant"></span></a></li>
-        <li><a href="#beverages-section" class="modal-category-link">Beverages <span class="category-count" id="count-beverages"></span></a></li>
-        <li><a href="#pastries-section" class="modal-category-link">Fresh Pastries <span class="category-count" id="count-pastries"></span></a></li>
-      </ul>
+      <h3 style="margin: 0 0 15px 0; font-size:18px;">Categories</h3>
+      <ul id="modalCategoryList"></ul>
     </div>
   </div>
 
   <script src="script.js"></script>
-  <!-- ...existing code... -->
 </body>
 
 </html>

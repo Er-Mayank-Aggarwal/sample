@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+  <script src="store-service.js"></script>
   <style>
     :root {
       --listerr-blue: #4280FD;
@@ -106,7 +106,7 @@
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
       background: #eee;
       pointer-events: auto;
       transition: box-shadow 0.2s;
@@ -127,45 +127,62 @@
       max-width: 90px;
       overflow: hidden;
       text-overflow: ellipsis;
-          @media (max-width: 500px) {
-            .header-left-group {
-              width: 60%;
-              gap: 3px;
-            }
-            .header-user-img {
-              width: 26px;
-              height: 26px;
-            }
-            .header-logo {
-              font-size: 18px;
-              margin-left: 4px;
-            }
-            .header-follow-btn {
-              font-size: 12px;
-              padding: 4px 7px;
-              margin-left: 5px;
-              min-width: 48px;
-              max-width: 70px;
-            }
-          }
-      box-shadow: 0 2px 8px rgba(66,128,253,0.10);
+
+      @media (max-width: 500px) {
+        .header-left-group {
+          width: 60%;
+          gap: 3px;
+        }
+
+        .header-user-img {
+          width: 26px;
+          height: 26px;
+        }
+
+        .header-logo {
+          font-size: 18px;
+          margin-left: 4px;
+        }
+
+        .header-follow-btn {
+          font-size: 12px;
+          padding: 4px 7px;
+          margin-left: 5px;
+          min-width: 48px;
+          max-width: 70px;
+        }
+      }
+
+      box-shadow: 0 2px 8px rgba(66, 128, 253, 0.10);
       cursor: pointer;
       outline: none;
       pointer-events: auto;
-      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      transition: background 0.2s,
+      color 0.2s,
+      box-shadow 0.2s;
       position: relative;
       overflow: hidden;
     }
+
     .header-follow-btn.following {
       background: #4280FD;
       color: #fff;
-      box-shadow: 0 2px 12px rgba(66,128,253,0.18);
+      box-shadow: 0 2px 12px rgba(66, 128, 253, 0.18);
       animation: btnPop 0.3s;
     }
+
     @keyframes btnPop {
-      0% { transform: scale(1); }
-      60% { transform: scale(1.12); }
-      100% { transform: scale(1); }
+      0% {
+        transform: scale(1);
+      }
+
+      60% {
+        transform: scale(1.12);
+      }
+
+      100% {
+        transform: scale(1);
+      }
     }
 
     .swipe-cta-container {
@@ -305,33 +322,75 @@
 
     <div class="app-header">
       <div class="header-left-group">
-        <img class="header-user-img" id="headerUserImg" src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="User DP" />
-        <div class="header-logo">Jars n' More</div> 
-        <button class="header-follow-btn" id="headerFollowBtn" onclick="toggleFollow(this)">Follow</button>
+        <img class="header-user-img" id="store-logo" src="" alt="Store Logo" style="display:none;"
+          onload="this.style.display='block'" />
+
+        <div class="header-logo" id="store-name">Loading...</div>
+
+        <button class="header-follow-btn" id="follow-btn" onclick="toggleFollow(this)">Follow</button>
       </div>
     </div>
 
-  <script>
-    // Try to set user image if available (replace with your logic)
-    // Example: if you have a user object with photoURL
-    if (window.getCurrentUser && window.getCurrentUser()) {
-      const user = window.getCurrentUser();
-      if (user.photoURL) {
-        document.getElementById('headerUserImg').src = user.photoURL;
-      }
+    <script>
+      document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Fetch Data from store-service.js
+  const data = await StoreService.getStoreData();
+
+  if (data) {
+    // A. Update Name & Title
+    document.getElementById('store-name').textContent = data.name;
+    document.title = data.name + " - Listerr Edition";
+
+    // B. Update Logo
+    const logoImg = document.getElementById('store-logo');
+    if (data.logo) {
+      logoImg.src = data.logo;
     }
 
-    // Follow button logic
-    function toggleFollow(btn) {
-      if (btn.classList.contains('following')) {
-        btn.classList.remove('following');
-        btn.textContent = 'Follow';
-      } else {
-        btn.classList.add('following');
-        btn.textContent = 'Following';
-      }
+    // C. Update Follow Button Status
+    const followBtn = document.getElementById('follow-btn');
+    if (data.isFollowing) {
+      followBtn.classList.add('following');
+      followBtn.textContent = 'Following';
     }
-  </script>
+
+    // D. Inject Video (Correctly for AMP)
+    // We must inject the entire amp-video tag to ensure the new source loads
+    const videoLayer = document.querySelector('amp-story-grid-layer');
+    if (videoLayer && data.video) {
+      videoLayer.innerHTML = `
+        <amp-video 
+          layout="fill" 
+          autoplay 
+          loop 
+          poster="${data.poster || ''}"
+          id="dynamic-video">
+          <source src="${data.video}" type="video/mp4">
+        </amp-video>
+      `;
+    }
+  }
+});
+      // Try to set user image if available (replace with your logic)
+      // Example: if you have a user object with photoURL
+      if (window.getCurrentUser && window.getCurrentUser()) {
+        const user = window.getCurrentUser();
+        if (user.photoURL) {
+          document.getElementById('headerUserImg').src = user.photoURL;
+        }
+      }
+
+      // Follow button logic
+      function toggleFollow(btn) {
+        if (btn.classList.contains('following')) {
+          btn.classList.remove('following');
+          btn.textContent = 'Follow';
+        } else {
+          btn.classList.add('following');
+          btn.textContent = 'Following';
+        }
+      }
+    </script>
 
     <div class="swipe-cta-container" id="swipe-trigger" onclick="openCatalog()">
       <div class="swipe-arrow"></div>
@@ -373,100 +432,100 @@
   <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
   <script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>
 
- <script>
+  <script>
     // State variable to track if we are inside a product page
     let isProductView = false;
 
     // 1. Open Menu (Catalog)
-    function openCatalog() { 
-        isProductView = false; // We are in the Menu list now
+    function openCatalog() {
+      isProductView = false; // We are in the Menu list now
 
-        const content = document.querySelector('.catalog-content');
-        
-        // Show Headers
-        document.querySelector('.app-header').style.display = 'flex';
-        document.querySelector('.catalog-header').style.display = 'flex';
-        
-        // Reset Drawer to 90%
-        const drawer = document.getElementById('catalog-drawer');
-        drawer.style.height = '90%';
-        drawer.style.borderRadius = '25px 25px 0 0';
+      const content = document.querySelector('.catalog-content');
 
-        content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none;"></iframe>';
-        drawer.classList.add('open'); 
-        document.getElementById('swipe-trigger').style.display = 'none'; 
+      // Show Headers
+      document.querySelector('.app-header').style.display = 'flex';
+      document.querySelector('.catalog-header').style.display = 'flex';
+
+      // Reset Drawer to 90%
+      const drawer = document.getElementById('catalog-drawer');
+      drawer.style.height = '90%';
+      drawer.style.borderRadius = '25px 25px 0 0';
+
+      content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none;"></iframe>';
+      drawer.classList.add('open');
+      document.getElementById('swipe-trigger').style.display = 'none';
     }
 
     // 2. Close Logic (The "Smart" Back Button)
-    function closeCatalog() { 
-        if (isProductView) {
-            // If product is open, GO BACK TO MENU
-            openCatalog();
-        } else {
-            // If menu is open, CLOSE DRAWER
-            document.getElementById('catalog-drawer').classList.remove('open'); 
-            document.getElementById('swipe-trigger').style.display = 'flex'; 
-            
-            // Show Main Header again
-            document.querySelector('.app-header').style.display = 'flex';
-            
-            setTimeout(() => {
-                document.querySelector('.catalog-content').innerHTML = '';
-            }, 400);
-        }
+    function closeCatalog() {
+      if (isProductView) {
+        // If product is open, GO BACK TO MENU
+        openCatalog();
+      } else {
+        // If menu is open, CLOSE DRAWER
+        document.getElementById('catalog-drawer').classList.remove('open');
+        document.getElementById('swipe-trigger').style.display = 'flex';
+
+        // Show Main Header again
+        document.querySelector('.app-header').style.display = 'flex';
+
+        setTimeout(() => {
+          document.querySelector('.catalog-content').innerHTML = '';
+        }, 400);
+      }
     }
 
     // 3. Open Cart
     function openCart() {
-        const content = document.querySelector('.catalog-content');
-        
-        // 1. Stop container scrolling (iframe handles it)
-        content.style.overflow = 'hidden';
+      const content = document.querySelector('.catalog-content');
 
-        // 2. Hide only the internal "Menu" header
-        document.querySelector('.catalog-header').style.display = 'none';
+      // 1. Stop container scrolling (iframe handles it)
+      content.style.overflow = 'hidden';
 
-        // 3. Keep Main App Header visible (since we are only 90%)
-        document.querySelector('.app-header').style.display = 'flex';
+      // 2. Hide only the internal "Menu" header
+      document.querySelector('.catalog-header').style.display = 'none';
 
-        // 4. Ensure Drawer is 90% with rounded corners
-        const drawer = document.getElementById('catalog-drawer');
-        drawer.style.height = '90%';
-        drawer.style.borderRadius = '25px 25px 0 0';
+      // 3. Keep Main App Header visible (since we are only 90%)
+      document.querySelector('.app-header').style.display = 'flex';
 
-        content.innerHTML = '<iframe src="cart.html" style="width:100%; height:100%; border:none; display:block; border-radius: 25px 25px 0 0;"></iframe>';
-        drawer.classList.add('open');
+      // 4. Ensure Drawer is 90% with rounded corners
+      const drawer = document.getElementById('catalog-drawer');
+      drawer.style.height = '90%';
+      drawer.style.borderRadius = '25px 25px 0 0';
+
+      content.innerHTML = '<iframe src="cart.html" style="width:100%; height:100%; border:none; display:block; border-radius: 25px 25px 0 0;"></iframe>';
+      drawer.classList.add('open');
     }
 
     // 4. Open Product Page (90% Drawer)
     function openProduct() {
-        isProductView = true; // Mark that we are viewing a product
+      isProductView = true; // Mark that we are viewing a product
 
-        const content = document.querySelector('.catalog-content');
-        
-        // Keep headers visible (since it's a 90% popup)
-        document.querySelector('.app-header').style.display = 'flex';
-        document.querySelector('.catalog-header').style.display = 'flex';
+      const content = document.querySelector('.catalog-content');
 
-        // Set Drawer to 90%
-        const drawer = document.getElementById('catalog-drawer');
-        drawer.style.height = '90%';
-        drawer.style.borderRadius = '25px 25px 0 0';
+      // Keep headers visible (since it's a 90% popup)
+      document.querySelector('.app-header').style.display = 'flex';
+      document.querySelector('.catalog-header').style.display = 'flex';
 
-        content.innerHTML = '<iframe src="product.html" style="width:100%; height:100%; border:none;"></iframe>';
-        drawer.classList.add('open');
+      // Set Drawer to 90%
+      const drawer = document.getElementById('catalog-drawer');
+      drawer.style.height = '90%';
+      drawer.style.borderRadius = '25px 25px 0 0';
+
+      content.innerHTML = '<iframe src="product.html" style="width:100%; height:100%; border:none;"></iframe>';
+      drawer.classList.add('open');
     }
 
     // 5. Helper function for product.html internal back button
     function closeProduct() {
-        openCatalog();
+      openCatalog();
     }
-    
+
     // 6. Helper for cart.html back button
     function closeCart() {
-        openCatalog();
+      openCatalog();
     }
-</script>
+  </script>
 
 </body>
 

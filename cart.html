@@ -4,8 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Li Listerr - Cart</title>
+  <title>Cart</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script src="store-service.js"></script>
 
   <style>
     :root {
@@ -16,21 +18,17 @@
 
     body {
       margin: 0;
-      font-family: 'Baloo 2';
+      font-family: 'Baloo 2', sans-serif;
       background: var(--bg-light);
       color: var(--text-grey);
       padding-bottom: 90px;
       overflow-x: hidden;
     }
 
-    /* HEADER - Notch Safe */
     /* HEADER */
     .cart-header {
       background: #fff;
-
-      /* CHANGE BACK: Standard padding since we are in a drawer */
       padding: 16px;
-
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -85,7 +83,7 @@
       font-weight: 600;
     }
 
-    /* CART ITEM - WITH IMAGE */
+    /* CART ITEM */
     .cart-item {
       display: flex;
       align-items: center;
@@ -97,7 +95,6 @@
       border-bottom: none;
     }
 
-    /* 🔥 NEW IMAGE STYLE */
     .cart-thumb {
       width: 50px;
       height: 50px;
@@ -215,234 +212,35 @@
       z-index: 0;
     }
 
-    /* Overlay */
+    /* Overlay & Login Modal Styles */
     .login-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      backdrop-filter: blur(2px);
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45);
+      display: none; align-items: center; justify-content: center;
+      z-index: 9999; backdrop-filter: blur(2px);
     }
-
-    /* Card */
     .login-card {
-      background: #fff;
-      width: 100%;
-      max-width: 360px;
-      border-radius: 18px;
-      padding: 28px 22px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
-      animation: slideUp 0.3s ease-out;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      background: #fff; width: 100%; max-width: 360px; border-radius: 18px;
+      padding: 28px 22px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+      animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; align-items: center;
     }
-
-    /* Headings */
-    .login-title {
-      margin: 0;
-      color: #4280FD;
-      font-size: 22px;
-      font-weight: 800;
-    }
-
-    .login-subtitle {
-      margin: 6px 0 20px;
-      font-size: 13px;
-      color: #777;
-      text-align: center;
-    }
-
-    /* Phone input container */
+    .login-title { margin: 0; color: #4280FD; font-size: 22px; font-weight: 800; }
+    .login-subtitle { margin: 6px 0 20px; font-size: 13px; color: #777; text-align: center; }
     .phone-input {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      height: 52px;
-      background: #eef5ff;
-      border-radius: 14px;
-      padding: 0 14px;
-      box-sizing: border-box;
-      overflow: hidden;
+      display: flex; align-items: center; width: 100%; height: 52px;
+      background: #eef5ff; border-radius: 14px; padding: 0 14px; box-sizing: border-box;
     }
-
-    /* +91 prefix */
-    .country-code {
-      font-size: 16px;
-      font-weight: 600;
-      color: #555;
-      margin-right: 8px;
-      white-space: nowrap;
-    }
-
-    
-
-
-    /* Buttons */
+    .country-code { font-size: 16px; font-weight: 600; color: #555; margin-right: 8px; }
     .primary-btn {
-      width: 100%;
-      padding: 12px;
-      background: #4280FD;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 8px;
+      width: 100%; padding: 12px; background: #4280FD; color: #fff;
+      border: none; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 8px;
     }
-
-    .primary-btn:active {
-      transform: scale(0.98);
-    }
-
-    /* OTP */
-    .otp-section {
-      display: none;
-      width: 100%;
-      margin-top: 14px;
-    }
-
-    .otp-section input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-    }
-
-    /* Message */
-    .otp-message {
-      min-height: 18px;
-      margin-top: 8px;
-      font-size: 13px;
-      color: #e53935;
-    }
-
-    /* Cancel */
-    .cancel-btn {
-      margin-top: 14px;
-      background: none;
-      border: none;
-      color: #4280FD;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    /* Animation */
-    @keyframes slideUp {
-      from {
-        transform: translateY(30px);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    /* Minimal Card like Image */
-    .login-card.minimal {
-      border-radius: 22px;
-      text-align: center;
-      box-sizing: border-box;
-    }
-
-    /* Logo */
-    .login-logo {
-      margin-bottom: 6px;
-    }
-
-    /* Headings */
-    .welcome-title {
-      margin: 0 0 2px 0;
-      font-size: 2.1rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-    }
-
-    .welcome-subtitle {
-      font-size: 1.1rem;
-      color: #777;
-      margin-bottom: 22px;
-      margin-top: 0;
-    }
-
-    /* Inputs */
-    .input-box {
-      width: 100%;
-      height: 52px;
-      /* 🔑 same as phone box */
-      padding: 0 16px;
-      /* horizontal only */
-      border-radius: 14px;
-      /* same curve */
-      border: none;
-      background: #eef5ff;
-      font-size: 16px;
-      outline: none;
-      box-sizing: border-box;
-      margin-bottom: 10px;
-    }
-
-
-    /* Phone row */
-    .phone-input {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      height: 52px;
-      /* 🔑 same height */
-      background: #eef5ff;
-      border-radius: 14px;
-      padding: 0 14px;
-      box-sizing: border-box;
-    }
-
-
-    .country-code {
-      padding: 0 10px;
-      font-size: 16px;
-      color: #555;
-      font-weight: 600;
-      height: 100%;
-      display: flex;
-      align-items: center;
-    }
-
-    .phone-input input {
-      border: none;
-      background: transparent;
-      padding: 12px;
-      flex: 1;
-      font-size: 16px;
-      outline: none;
-      height: 100%;
-    }
-
-    /* Button */
-    .primary-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      letter-spacing: 0.5px;
-    }
-
-    /* reCAPTCHA */
-    .recaptcha-box {
-      height: 1px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-
-
-    /* OTP */
-    .otp-section {
-      margin-top: 14px;
-    }
+    .otp-section { display: none; width: 100%; margin-top: 14px; }
+    .otp-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 10px; }
+    .otp-message { min-height: 18px; margin-top: 8px; font-size: 13px; color: #e53935; }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .input-box { width: 100%; height: 52px; padding: 0 16px; border-radius: 14px; border: none; background: #eef5ff; font-size: 16px; outline: none; box-sizing: border-box; margin-bottom: 10px; }
+    .phone-input input { border: none; background: transparent; padding: 12px; flex: 1; font-size: 16px; outline: none; height: 100%; }
+    .recaptcha-box { height: 1px; overflow: hidden; margin-top: 10px; }
   </style>
 </head>
 
@@ -458,7 +256,7 @@
 
   <div class="cart-store">
     <div class="store-header">
-      <div class="store-name">Jars n' More</div>
+      <div class="store-name" id="store-name-display">Store</div>
       <div class="store-items"><span id="store-item-count">0</span> ITEMS</div>
     </div>
     <div id="cart-items"></div>
@@ -471,50 +269,52 @@
     </div>
     <button class="checkout-btn" id="checkout-btn"
       onclick="window.checkoutHandler && window.checkoutHandler(event)">CHECKOUT</button>
-    <!-- LOGIN MODAL -->
+
     <div id="login-modal" class="login-overlay" onclick="hideLoginModal(event)">
       <div class="login-card minimal" onclick="event.stopPropagation()">
-
-        <!-- Logo -->
         <div class="login-logo">
-          <img src="Listerr_logo.png" alt="Logo" class="logo-icon"
-            style="width: 70px; height:70px; object-fit:contain;">
+          <img src="Listerr_logo.png" alt="Logo" class="logo-icon" style="width: 70px; height:70px; object-fit:contain;">
         </div>
-
         <h2 class="welcome-title">Namaste</h2>
         <p class="welcome-subtitle">Create your account to get started</p>
 
-        <!-- Name -->
         <input id="user-name" type="text" class="input-box" placeholder="Your name" />
 
-        <!-- Phone -->
         <div class="phone-input">
-          <span class="country-code">+91</span>
-          <input id="phone-number" type="tel" placeholder="Phone number" maxlength="10" />
+          <select id="country-code" class="country-code" style="height: 40px; border: none; background: transparent; font-size: 16px; outline: none;">
+            <option value="+91" selected>🇮🇳 +91 (India)</option>
+            <option value="+1">🇺🇸 +1 (USA)</option>
+            <option value="+44">🇬🇧 +44 (UK)</option>
+            <option value="+61">🇦🇺 +61 (Australia)</option>
+            <option value="+81">🇯🇵 +81 (Japan)</option>
+            <option value="+49">🇩🇪 +49 (Germany)</option>
+            <option value="+971">🇦🇪 +971 (UAE)</option>
+            <option value="+92">🇵🇰 +92 (Pakistan)</option>
+            <option value="+880">🇧🇩 +880 (Bangladesh)</option>
+            <option value="+86">🇨🇳 +86 (China)</option>
+            <option value="+7">🇷🇺 +7 (Russia)</option>
+            <option value="+33">🇫🇷 +33 (France)</option>
+            <option value="+39">🇮🇹 +39 (Italy)</option>
+            <option value="+34">🇪🇸 +34 (Spain)</option>
+            <option value="+62">🇮🇩 +62 (Indonesia)</option>
+          </select>
+          <input id="phone-number" type="tel" placeholder="Phone number" maxlength="15" style="min-width: 0;" />
         </div>
 
-        <!-- Generate OTP -->
         <div id="generate-otp-wrapper" style="margin-top: 10px;">
           <button id="generate-otp-btn" class="primary-btn" onclick="showRecaptchaAndSendOTP()">
             GENERATE OTP
           </button>
         </div>
 
-
-
-        <!-- reCAPTCHA (hidden initially) -->
         <div id="recaptcha-container" class="recaptcha-box"></div>
 
-        <!-- OTP -->
         <div id="otp-section" class="otp-section">
           <input id="otp-code" type="text" class="input-box" placeholder="Enter 6-digit OTP" />
-          <button class="primary-btn" onclick="window.verifyOTP()">
-            VERIFY OTP
-          </button>
+          <button class="primary-btn" onclick="window.verifyOTP()">VERIFY OTP</button>
         </div>
 
         <div id="otp-message" class="otp-message"></div>
-
       </div>
     </div>
 
@@ -522,13 +322,29 @@
   </div>
 
   <script>
-    let cart = JSON.parse(localStorage.getItem("cart")) || {};
+    // 1. INITIALIZE CART USING STORE SERVICE
+    // This ensures we get the cart specific to the current store
+    let cart = {};
+
+    document.addEventListener('DOMContentLoaded', async () => {
+       // A. Get Store Data for Title
+       if(window.StoreService) {
+          const data = await window.StoreService.getStoreData();
+          if(data) {
+             document.getElementById('store-name-display').textContent = data.name;
+          }
+          // B. Get Cart Data
+          cart = window.StoreService.getCart();
+          renderCart();
+       } else {
+          console.error("StoreService not found in Cart!");
+       }
+    });
 
     const phoneInput = document.getElementById("phone-number");
     const nameInput = document.getElementById("user-name");
 
     /* ---------------- OTP TRIGGER ---------------- */
-
     window.showRecaptchaAndSendOTP = function () {
       const phone = phoneInput.value.trim();
       const name = nameInput.value.trim();
@@ -538,20 +354,16 @@
         otpMsg.textContent = "Enter valid name and 10-digit phone number.";
         return;
       }
-
       otpMsg.textContent = "";
-
-      // 🔥 show loading state (handled in firebase-login.js)
       window.setGenerateOTPLoading(true);
-
-      // 🔥 send OTP (Firebase logic)
       window.sendOTP();
     };
 
     /* ---------------- CART LOGIC ---------------- */
 
     function saveCart() {
-      localStorage.setItem("cart", JSON.stringify(cart));
+      // Use StoreService to save (maintains isolation)
+      window.StoreService.saveCart(cart);
     }
 
     function renderCart() {
@@ -577,8 +389,9 @@
         totalQty += item.qty;
         totalPrice += item.qty * item.price;
 
+        // Use item.img or fallback
         const imgDisplay = item.img
-          ? `<img src="${item.img}" class="cart-thumb">`
+          ? `<img src="${item.img}" class="cart-thumb" onerror="this.src='fallback.jpeg'">`
           : `<div class="cart-thumb" style="display:flex;align-items:center;justify-content:center;">
              <i class="fas fa-image" style="color:#ccc;"></i>
            </div>`;
@@ -604,6 +417,7 @@
       document.getElementById("store-item-count").textContent = totalQty;
       document.getElementById("total-price").textContent = totalPrice.toFixed(2);
 
+      // Update Parent Badge (index.html)
       try {
         if (window.parent) {
           const parentBadge = window.parent.document.querySelector(".cart-badge");
@@ -633,10 +447,7 @@
         renderCart();
       }
     };
-
-    renderCart();
   </script>
 
 </body>
-
 </html>
