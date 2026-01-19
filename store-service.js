@@ -23,7 +23,7 @@ const StoreService = {
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzY4NzE1Njg4fQ.-QtS1TwI8it2FkjH-KXf6juE4P_wOFCggvbxiAXmY84";
 
     if (!storeId) {
-      throw new Error("Missing store ID in URL (?store=1)");
+      throw new Error("Missing store ID in URL (?store=2)");
     }
 
     if (!token) {
@@ -45,11 +45,15 @@ const StoreService = {
       throw new Error("Failed to fetch stores");
     }
 
-    const stores = await storeRes.json();
-    const store = stores.find(s => String(s.id) === String(storeId));
+    const storeJson = await storeRes.json();
+    const allStores = Array.isArray(storeJson)
+      ? storeJson
+      : storeJson.data || storeJson.stores || [];
+
+    const store = allStores.find(s => String(s.id) === String(storeId));
 
     if (!store) {
-      throw new Error("Store not found");
+      throw new Error(`Store ${storeId} not found`);
     }
 
     /* ---------- 2. GET ALL CATALOGS ---------- */
@@ -61,7 +65,10 @@ const StoreService = {
       throw new Error("Failed to fetch catalogs");
     }
 
-    const allCatalogs = await catalogRes.json();
+    const catalogJson = await catalogRes.json();
+    const allCatalogs = Array.isArray(catalogJson)
+      ? catalogJson
+      : catalogJson.data || catalogJson.catalogs || [];
 
     const catalogs = allCatalogs.filter(
       c => String(c.store_id) === String(storeId)
@@ -76,7 +83,10 @@ const StoreService = {
       throw new Error("Failed to fetch products");
     }
 
-    const allProducts = await productRes.json();
+    const productJson = await productRes.json();
+    const allProducts = Array.isArray(productJson)
+      ? productJson
+      : productJson.data || productJson.products || [];
 
     /* ---------- 4. GROUP PRODUCTS BY CATALOG ---------- */
     const categories = catalogs.map(cat => {
