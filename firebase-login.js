@@ -24,11 +24,13 @@ const auth = getAuth(app);
 auth.useDeviceLanguage();
 
 // ==========================================
-// 1. EXPOSE AUTH GLOBALLY (Required for SSO)
+// 1. EXPOSE AUTH & FIREBASE UTILS GLOBALLY (Required for SSO & OTP)
 // ==========================================
 window.FirebaseAuth = auth;
 window.FirebaseListener = onAuthStateChanged;
 window.FirebaseSignOut = signOut;
+window.RecaptchaVerifier = RecaptchaVerifier;
+window.signInWithPhoneNumber = signInWithPhoneNumber;
 
 let confirmationResult = null;
 let authReady = false;
@@ -127,20 +129,25 @@ window.checkoutHandler = function (e) {
 
 /* ---------------- OTP LOGIC ---------------- */
 
-window.sendOTP = function () {
+window.sendOTP = function (callback) {
   const phoneInput = document.getElementById("phone-number");
-  if(!phoneInput) return;
+  if(!phoneInput) {
+    if (callback) callback(false, "Phone input not found");
+    return;
+  }
 
   const phone = phoneInput.value.trim();
-  const phoneNumber = "+91" + phone;
+  const phoneNumber = phone;
 
   console.log("Sending OTP to:", phoneNumber);
 
   const otpMsg = document.getElementById("otp-message");
 
-  if (!/^\+91\d{10}$/.test(phoneNumber)) {
-    if(otpMsg) otpMsg.textContent = "Enter a valid 10-digit phone number";
+  // Accept any country code, min 8 digits after +
+  if (!/^\+\d{8,15}$/.test(phoneNumber)) {
+    if(otpMsg) otpMsg.textContent = "Enter a valid phone number";
     window.setGenerateOTPLoading(false);
+    if (callback) callback(false, "Enter a valid phone number");
     return;
   }
 
@@ -173,14 +180,14 @@ window.sendOTP = function () {
           otpSection.style.animation = "slideUp 0.25s ease";
       }
       if(otpMsg) otpMsg.textContent = "OTP sent!";
-      
       window.setGenerateOTPLoading(false);
+      if (callback) callback(true);
     })
     .catch((error) => {
       console.error(error);
       if(otpMsg) otpMsg.textContent = "Failed to send OTP. Try again.";
       window.setGenerateOTPLoading(false);
-      
+      if (callback) callback(false, "Failed to send OTP. Try again.");
       // Reset Recaptcha if failed
       if(window.recaptchaVerifier) {
           window.recaptchaVerifier.clear();

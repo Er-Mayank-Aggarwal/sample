@@ -18,7 +18,7 @@
 
     body {
       margin: 0;
-      font-family: 'Baloo 2', sans-serif;
+      font-family: 'Baloo 2';
       background: var(--bg-light);
       color: var(--text-grey);
       padding-bottom: 90px;
@@ -275,46 +275,51 @@
         <div class="login-logo">
           <img src="Listerr_logo.png" alt="Logo" class="logo-icon" style="width: 70px; height:70px; object-fit:contain;">
         </div>
-        <h2 class="welcome-title">Namaste</h2>
-        <p class="welcome-subtitle">Create your account to get started</p>
+        <h2 class="welcome-title">Welcome</h2>
+        <p class="welcome-subtitle">Login to your account</p>
 
-        <input id="user-name" type="text" class="input-box" placeholder="Your name" />
-
-        <div class="phone-input">
-          <select id="country-code" class="country-code" style="height: 40px; border: none; background: transparent; font-size: 16px; outline: none;">
-            <option value="+91" selected>🇮🇳 +91 (India)</option>
-            <option value="+1">🇺🇸 +1 (USA)</option>
-            <option value="+44">🇬🇧 +44 (UK)</option>
-            <option value="+61">🇦🇺 +61 (Australia)</option>
-            <option value="+81">🇯🇵 +81 (Japan)</option>
-            <option value="+49">🇩🇪 +49 (Germany)</option>
-            <option value="+971">🇦🇪 +971 (UAE)</option>
-            <option value="+92">🇵🇰 +92 (Pakistan)</option>
-            <option value="+880">🇧🇩 +880 (Bangladesh)</option>
-            <option value="+86">🇨🇳 +86 (China)</option>
-            <option value="+7">🇷🇺 +7 (Russia)</option>
-            <option value="+33">🇫🇷 +33 (France)</option>
-            <option value="+39">🇮🇹 +39 (Italy)</option>
-            <option value="+34">🇪🇸 +34 (Spain)</option>
-            <option value="+62">🇮🇩 +62 (Indonesia)</option>
-          </select>
-          <input id="phone-number" type="tel" placeholder="Phone number" maxlength="15" style="min-width: 0;" />
+        <div id="login-section">
+          <input id="login-email" type="email" class="input-box" placeholder="Email" />
+          <input id="login-password" type="password" class="input-box" placeholder="Password" />
+          <button class="primary-btn" onclick="loginUser()">LOGIN</button>
+          <button class="primary-btn" style="background:#eee;color:#4280FD;margin-top:8px;" onclick="showRegisterSection()">REGISTER</button>
+          <div id="login-message" class="otp-message"></div>
         </div>
 
-        <div id="generate-otp-wrapper" style="margin-top: 10px;">
-          <button id="generate-otp-btn" class="primary-btn" onclick="showRecaptchaAndSendOTP()">
-            GENERATE OTP
-          </button>
+        <div id="register-section" style="display:none; width:100%;">
+          <input id="register-name" type="text" class="input-box" placeholder="Your name" />
+          <div class="phone-input">
+            <select id="country-code" class="country-code" style="height: 40px; width: 110px; border: none; background: transparent; font-size: 16px; outline: none;">
+              <option value="+91" selected>🇮🇳 +91</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+61">🇦🇺 +61</option>
+              <option value="+81">🇯🇵 +81</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+971">🇦🇪 +971</option>
+              <option value="+92">🇵🇰 +92</option>
+              <option value="+880">🇧🇩 +880</option>
+              <option value="+86">🇨🇳 +86</option>
+              <option value="+7">🇷🇺 +7</option>
+              <option value="+33">🇫🇷 +33</option>
+              <option value="+39">🇮🇹 +39</option>
+              <option value="+34">🇪🇸 +34</option>
+              <option value="+62">🇮🇩 +62</option>
+            </select>
+            <input id="register-phone" type="tel" placeholder="Phone number" maxlength="15" style="min-width: 0;" />
+          </div>
+          <button id="generate-otp-btn" class="primary-btn" onclick="showOTPSection()">GENERATE OTP</button>
+          <button class="primary-btn" style="background:#eee;color:#4280FD;margin-top:8px;" onclick="showLoginSection()">BACK TO LOGIN</button>
+          <div id="register-message" class="otp-message"></div>
         </div>
 
-        <div id="recaptcha-container" class="recaptcha-box"></div>
-
-        <div id="otp-section" class="otp-section">
+        <div id="otp-section" class="otp-section" style="display:none; width:100%;">
           <input id="otp-code" type="text" class="input-box" placeholder="Enter 6-digit OTP" />
-          <button class="primary-btn" onclick="window.verifyOTP()">VERIFY OTP</button>
+          <button class="primary-btn" onclick="verifyOTP()">VERIFY OTP</button>
+          <button id="resend-otp-btn" class="primary-btn" style="background:#eee;color:#4280FD;margin-top:8px;" onclick="resendOTP()" disabled>Resend OTP <span id="resend-timer">30</span>s</button>
+          <div id="otp-message" class="otp-message"></div>
+          <div id="recaptcha-container" class="recaptcha-box"></div>
         </div>
-
-        <div id="otp-message" class="otp-message"></div>
       </div>
     </div>
 
@@ -341,23 +346,141 @@
        }
     });
 
-    const phoneInput = document.getElementById("phone-number");
-    const nameInput = document.getElementById("user-name");
-
-    /* ---------------- OTP TRIGGER ---------------- */
-    window.showRecaptchaAndSendOTP = function () {
-      const phone = phoneInput.value.trim();
-      const name = nameInput.value.trim();
-      const otpMsg = document.getElementById("otp-message");
-
+    // --- LOGIN/REGISTER/OTP LOGIC ---
+    window.showLoginSection = function() {
+      document.getElementById('login-section').style.display = 'block';
+      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('otp-section').style.display = 'none';
+    }
+    window.showRegisterSection = function() {
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('register-section').style.display = 'block';
+      document.getElementById('otp-section').style.display = 'none';
+    }
+    let resendTimerInterval = null;
+    function showOTPSection() {
+      // Validate phone and name
+      const phone = document.getElementById('register-phone').value.trim();
+      const name = document.getElementById('register-name').value.trim();
+      const code = document.getElementById('country-code').value;
+      const msg = document.getElementById('register-message');
       if (phone.length !== 10 || name.length < 3) {
-        otpMsg.textContent = "Enter valid name and 10-digit phone number.";
+        msg.textContent = 'Enter valid name and 10-digit phone number.';
         return;
       }
-      otpMsg.textContent = "";
+      msg.textContent = '';
+      // Set phone number for Firebase OTP (format: +911234567890)
+      setFirebasePhoneInput(code, phone);
       window.setGenerateOTPLoading(true);
+      // Patch window.sendOTP to accept a callback for result
+      sendOTP(function(success, errorMsg) {
+        window.setGenerateOTPLoading(false);
+        if (success) {
+          document.getElementById('register-section').style.display = 'none';
+          document.getElementById('otp-section').style.display = 'block';
+          startResendTimer(true);
+        } else {
+          msg.textContent = errorMsg || 'Failed to send OTP. Try again.';
+        }
+      });
+    }
+
+
+    function resendOTP() {
+      const phone = document.getElementById('register-phone').value.trim();
+      const code = document.getElementById('country-code').value;
+      setFirebasePhoneInput(code, phone);
       window.sendOTP();
-    };
+      startResendTimer(false);
+    }
+
+    function startResendTimer(isFirst) {
+      const btn = document.getElementById('resend-otp-btn');
+      let timeLeft = 30;
+      btn.disabled = true;
+      btn.innerHTML = `Resend OTP <span id="resend-timer">${timeLeft}</span>s`;
+      if (resendTimerInterval) clearInterval(resendTimerInterval);
+      resendTimerInterval = setInterval(() => {
+        timeLeft--;
+        btn.innerHTML = `Resend OTP <span id="resend-timer">${timeLeft}</span>s`;
+        if (timeLeft <= 0) {
+          clearInterval(resendTimerInterval);
+          btn.disabled = false;
+          btn.innerHTML = 'Resend OTP';
+        }
+      }, 1000);
+    }
+    function loginUser() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const msg = document.getElementById('login-message');
+      if (!email || !password) {
+        msg.textContent = 'Please enter email and password.';
+        return;
+      }
+      msg.textContent = 'Logging in...';
+      fetch('https://listerrboardecom-asanb9fzg4ghbza2.centralindia-01.azurewebsites.net/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'password',
+          username: email,
+          password: password
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.access_token) {
+            localStorage.setItem('access_token', data.access_token);
+            localStorage.setItem('token_type', data.token_type || 'bearer');
+            msg.textContent = 'Login successful!';
+            // Optionally close modal or reload page
+          } else {
+            msg.textContent = 'Incorrect email or password.';
+          }
+        })
+        .catch(() => {
+          msg.textContent = 'Login failed. Please try again.';
+        });
+    }
+
+    function verifyOTP() {
+      const otp = document.getElementById('otp-code').value.trim();
+      const msg = document.getElementById('otp-message');
+      if (otp.length !== 6) {
+        msg.textContent = 'Enter valid 6-digit OTP.';
+        return;
+      }
+      msg.textContent = 'Verifying OTP...';
+      // Set OTP code for Firebase
+      document.getElementById('otp-code').value = otp;
+      window.verifyOTP();
+    }
+
+    // Helper to set the phone number in the hidden phone input for Firebase OTP
+    function setFirebasePhoneInput(code, phone) {
+      let phoneInput = document.getElementById('phone-number');
+      if (!phoneInput) {
+        phoneInput = document.createElement('input');
+        phoneInput.type = 'hidden';
+        phoneInput.id = 'phone-number';
+        document.body.appendChild(phoneInput);
+      }
+      // Ensure only one country code
+      let formatted = phone;
+      if (phone.startsWith('0')) formatted = phone.substring(1);
+      if (!formatted.startsWith(code.replace('+', ''))) {
+        formatted = code + formatted;
+      } else {
+        formatted = '+' + formatted;
+      }
+      phoneInput.value = formatted;
+    }
+
+    // Show login by default
+    document.addEventListener('DOMContentLoaded', showLoginSection);
 
     /* ---------------- CART LOGIC ---------------- */
 
