@@ -1,7 +1,15 @@
 // store-service.js
 
+
+
 const BASE_URL =
   "https://listerrboardecom-asanb9fzg4ghbza2.centralindia-01.azurewebsites.net";
+window.BASE_URL = BASE_URL;
+
+const AUTH_TOKEN =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzY4OTIzMjIyfQ.A7e14kDAtTCHoJ0UapaJtPwLuHprPaDOpvIopzR1cUA";
+
+  window.AUTH_TOKEN = AUTH_TOKEN;
 
 let _cachedStoreId = null;
 
@@ -56,8 +64,7 @@ const StoreService = {
   getStoreData: async () => {
     const storeId = StoreService.getStoreId();
 
-    const token =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzY4NzE1Njg4fQ.-QtS1TwI8it2FkjH-KXf6juE4P_wOFCggvbxiAXmY84";
+    const token = window.AUTH_TOKEN;
 
     if (!storeId) {
       throw new Error("Missing store ID in URL (?store=2)");

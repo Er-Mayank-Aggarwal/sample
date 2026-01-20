@@ -347,11 +347,41 @@
       logoImg.src = data.logo;
     }
 
-    // C. Update Follow Button Status
+    // C. Update Follow Button Status using API (with BASE_URL)
     const followBtn = document.getElementById('follow-btn');
-    if (data.isFollowing) {
-      followBtn.classList.add('following');
-      followBtn.textContent = 'Following';
+    let BASE_URL = null;
+    if (window.BASE_URL) {
+      BASE_URL = window.BASE_URL;
+    } else if (window.StoreService && window.StoreService.BASE_URL) {
+      BASE_URL = window.StoreService.BASE_URL;
+    } else {
+      try {
+        BASE_URL = (await import('./store-service.js')).BASE_URL;
+      } catch (e) {}
+    }
+    try {
+      const resp = await fetch(`${BASE_URL}/api/v1/stores/${data.id}/follow-status`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${window.AUTH_TOKEN}`
+        }
+      });
+      if (resp.ok) {
+        const result = await resp.json();
+        if (result && result.is_following === true) {
+          followBtn.classList.add('following');
+          followBtn.textContent = 'Following';
+        } else {
+          followBtn.classList.remove('following');
+          followBtn.textContent = 'Follow';
+        }
+      } else {
+        followBtn.classList.remove('following');
+        followBtn.textContent = 'Follow';
+      }
+    } catch (e) {
+      followBtn.classList.remove('following');
+      followBtn.textContent = 'Follow';
     }
 
     // D. Inject Video (Correctly for AMP)
@@ -380,14 +410,77 @@
         }
       }
 
-      // Follow button logic
-      function toggleFollow(btn) {
-        if (btn.classList.contains('following')) {
+      // Follow button logic with API integration
+      async function toggleFollow(btn) {
+        // Get store id from StoreService.getStoreData()
+        let storeId = null;
+        let BASE_URL = null;
+        if (window.StoreService && StoreService.getStoreData) {
+          const data = await StoreService.getStoreData();
+          storeId = data && data.id;
+        }
+        if (window.StoreService && window.StoreService.getStoreId) {
+          storeId = storeId || window.StoreService.getStoreId();
+        }
+        if (window.BASE_URL) {
+          BASE_URL = window.BASE_URL;
+        } else if (window.StoreService && window.StoreService.BASE_URL) {
+          BASE_URL = window.StoreService.BASE_URL;
+        } else {
+          // fallback: try to get from script
+          try {
+            BASE_URL = (await import('./store-service.js')).BASE_URL;
+          } catch (e) {}
+        }
+        if (!storeId || !BASE_URL) return;
+
+        const url = `${BASE_URL}/api/v1/stores/${storeId}/follow`;
+        // Optimistic UI update
+        const wasFollowing = btn.classList.contains('following');
+        if (wasFollowing) {
           btn.classList.remove('following');
           btn.textContent = 'Follow';
+          // Unfollow: send request, expect 200 for success
+          try {
+            const resp = await fetch(url, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${window.AUTH_TOKEN}`
+              }
+            });
+            if (resp.status !== 200) {
+              // Revert if failed
+              btn.classList.add('following');
+              btn.textContent = 'Following';
+            }
+          } catch (e) {
+            // Revert if error
+            btn.classList.add('following');
+            btn.textContent = 'Following';
+          }
         } else {
           btn.classList.add('following');
           btn.textContent = 'Following';
+          // Follow: send request, expect 201 for success, 422 for error
+          try {
+            const resp = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${window.AUTH_TOKEN}`
+              },
+              body: JSON.stringify({ store_id: parseInt(storeId) })
+            });
+            if (resp.status !== 201) {
+              // Revert if failed
+              btn.classList.remove('following');
+              btn.textContent = 'Follow';
+            }
+          } catch (e) {
+            // Revert if error
+            btn.classList.remove('following');
+            btn.textContent = 'Follow';
+          }
         }
       }
     </script>
