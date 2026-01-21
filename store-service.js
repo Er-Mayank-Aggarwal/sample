@@ -2,10 +2,12 @@
 
 
 
+// Import AuthToken utility
+import AuthToken from './auth-token.js';
+
 const BASE_URL =
   "https://listerrboardecom-asanb9fzg4ghbza2.centralindia-01.azurewebsites.net";
 window.BASE_URL = BASE_URL;
-
 
 let _cachedStoreId = null;
 
@@ -18,13 +20,16 @@ const StoreService = {
     if (_cachedStoreId) {
       return _cachedStoreId;
     }
+
     // Try query param (?store=2)
     const params = new URLSearchParams(window.location.search);
     const idFromQuery = params.get("store");
+
     if (idFromQuery) {
       _cachedStoreId = idFromQuery;
       return idFromQuery;
     }
+
     // Try parent window (iframe case)
     try {
       if (window.parent && window.parent !== window) {
@@ -32,18 +37,21 @@ const StoreService = {
           window.parent.location.search
         );
         const idFromParent = parentParams.get("store");
+
         if (idFromParent) {
           _cachedStoreId = idFromParent;
           return idFromParent;
         }
       }
     } catch (e) {}
+
     // Last resort: localStorage
     const stored = localStorage.getItem("active_store_id");
     if (stored) {
       _cachedStoreId = stored;
       return stored;
     }
+
     return null;
   },
 
@@ -54,11 +62,7 @@ const StoreService = {
   getStoreData: async () => {
     const storeId = StoreService.getStoreId();
 
-    const token = window.AUTH_TOKEN || localStorage.getItem('AUTH_TOKEN');
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': 'Bearer ' + token } : {})
-    };
+    const token = AuthToken.get();
 
     if (!storeId) {
       throw new Error("Missing store ID in URL (?store=2)");
@@ -68,6 +72,10 @@ const StoreService = {
     localStorage.setItem("active_store_id", storeId);
 
     console.log(`[StoreService] Loading store ${storeId}`);
+
+    const headers = {
+      Authorization: `Bearer ${token}`
+    };
 
     /* ---------- 1. GET STORE WITH CATEGORIES + PRODUCTS ---------- */
     const storeRes = await fetch(
@@ -125,12 +133,5 @@ const StoreService = {
     );
   }
 };
-
-// Helper to always get the latest token
-function getAuthToken() {
-  const token = window.AUTH_TOKEN || localStorage.getItem("AUTH_TOKEN");
-  console.log("[getAuthToken] window.AUTH_TOKEN:", window.AUTH_TOKEN, "localStorage:", localStorage.getItem("AUTH_TOKEN"));
-  return token;
-}
 
 window.StoreService = StoreService;

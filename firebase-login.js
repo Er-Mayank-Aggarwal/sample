@@ -11,6 +11,7 @@ import {
   setPersistence,
   browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import AuthToken from './auth-token.js';
 
 
 /* =====================================
@@ -77,27 +78,10 @@ onAuthStateChanged(auth, async (user) => {
 
   if (user) {
     console.log("✅ User logged in:", user.uid);
-
-    // 🔥 Always refresh token safely
-    const token = await user.getIdToken(true);
-
-    // Save everywhere
-    window.AUTH_TOKEN = token;
-    localStorage.setItem("AUTH_TOKEN", token);
-
-    console.log("🔐 AUTH TOKEN SET:", token.slice(0, 25) + "...");
-
+    // Do NOT set AuthToken or localStorage here. Only backend API token should be used for app auth.
   } else {
-    // ❌ DO NOT CLEAR TOKEN HERE
     // Firebase takes time to restore session on page load
     console.log("⏳ Firebase restoring session... keeping existing token");
-
-    // If token already exists, trust it
-    const existing = localStorage.getItem("AUTH_TOKEN");
-    if (existing) {
-      window.AUTH_TOKEN = existing;
-      console.log("♻️ Reusing saved token from localStorage");
-    }
   }
 });
 
@@ -108,16 +92,13 @@ onAuthStateChanged(auth, async (user) => {
 
 window.getAuthToken = async function () {
   const user = auth.currentUser;
-
   if (user) {
     const token = await user.getIdToken(true);
-    window.AUTH_TOKEN = token;
-    localStorage.setItem("AUTH_TOKEN", token);
+    // Do NOT set AuthToken here. Only backend API token should be used for app auth.
     return token;
   }
-
   // fallback from storage
-  return localStorage.getItem("AUTH_TOKEN");
+  return AuthToken.get();
 };
 
 

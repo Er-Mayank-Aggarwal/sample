@@ -1,13 +1,3 @@
-// Expose a function to show the login modal from parent
-window.showLoginModal = function() {
-  const modal = document.getElementById('login-modal');
-  if (modal) {
-    modal.style.display = 'flex';
-    modal.style.zIndex = 99999;
-    modal.focus && modal.focus();
-  }
-  window.showLoginSection && window.showLoginSection();
-};
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,19 +7,11 @@ window.showLoginModal = function() {
   <title>Cart</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Restore AUTH_TOKEN from localStorage before any other script -->
-  <script>
-    if (!window.AUTH_TOKEN) {
-      const token = localStorage.getItem('AUTH_TOKEN');
-      if (token) {
-        window.AUTH_TOKEN = token;
-        console.log('[restore] AUTH_TOKEN from localStorage:', token);
-      }
-    }
-  </script>
-  <script src="store-service.js"></script>
-  <!-- Place this before any script that uses window.FirebaseAuth or requireLogin -->
-  <script type="module" src="firebase-login.js"></script>
+    <script type="module" src="store-service.js"></script>
+    <script type="module">
+      import AuthToken from './auth-token.js';
+      window.AuthToken = AuthToken;
+    </script>
 
   <style>
     :root {
@@ -290,7 +272,7 @@ window.showLoginModal = function() {
       <div class="total-price">₹<span id="total-price">0</span></div>
     </div>
     <button class="checkout-btn" id="checkout-btn"
-      onclick="window.checkoutHandler && window.checkoutHandler(event)">CHECKOUT</button>
+      onclick="handleCheckout(event)">CHECKOUT</button>
 
     <div id="login-modal" class="login-overlay" onclick="hideLoginModal(event)">
       <div class="login-card minimal" onclick="event.stopPropagation()">
@@ -349,16 +331,27 @@ window.showLoginModal = function() {
   </div>
 
   <script>
-      // Restore AUTH_TOKEN from localStorage at the very top
-      if (!window.AUTH_TOKEN) {
-        const token = localStorage.getItem('AUTH_TOKEN');
-        if (token) {
-          window.AUTH_TOKEN = token;
-          console.log('[restore] AUTH_TOKEN from localStorage:', token);
-        }
-      }
-
     // 1. INITIALIZE CART USING STORE SERVICE
+
+    // Checkout handler: checks AUTH_TOKEN and shows login or redirects
+    window.handleCheckout = function(event) {
+      event.preventDefault();
+      if (!window.AUTH_TOKEN) {
+        // Show login modal
+        document.getElementById('login-modal').style.display = 'flex';
+        window.showLoginSection();
+      } else {
+        window.location.href = "shipping.html";
+      }
+        event.preventDefault();
+        if (!AuthToken.get()) {
+          // Show login modal
+          document.getElementById('login-modal').style.display = 'flex';
+          window.showLoginSection();
+        } else {
+          window.location.href = "shipping.html";
+        }
+    };
     // This ensures we get the cart specific to the current store
     let cart = {};
 
@@ -414,9 +407,8 @@ function showOTPSection() {
   const name = document.getElementById('register-name').value.trim();
   const code = document.getElementById('country-code').value;
   const msg = document.getElementById('register-message');
-
-  if (phone.length !== 10 || name.length < 3) {
-    msg.textContent = 'Enter valid name and 10-digit phone number.';
+  if (!name) {
+    msg.textContent = "Enter your name.";
     return;
   }
 
@@ -437,9 +429,11 @@ function showOTPSection() {
   })
   .then(async resp => {
     if (resp.status === 404) {
-      window._phoneFound = false;
       console.log("New user detected (404)");
     } else if (resp.ok) {
+      AuthToken.set(data.access_token);
+            console.log('AUTH_TOKEN set after login:', AuthToken.get());
+
       window._phoneFound = true;
       console.log("Existing user detected");
     } else {
@@ -496,43 +490,33 @@ async function handleVerifyOTP() {
     const result = await window.confirmationResult.confirm(otp);
     console.log("OTP verified:", result.user);
 
-    // WAIT FOR BACKEND CHECK
-    let waited = 0;
-    while (window._phoneFound === null && waited < 3000) {
-      await new Promise(r => setTimeout(r, 100));
-      waited += 100;
-    }
-
-    if (window._phoneFound === false) {
-      // NEW USER
-      showRegistrationForm();
-    } else {
-      // EXISTING USER
-      // Optionally fetch user details from API using phone number
-      const phone = document.getElementById('register-phone') ? document.getElementById('register-phone').value.trim() : '';
-      const code = document.getElementById('country-code') ? document.getElementById('country-code').value : '';
-      const baseUrl = window.BASE_URL || '';
-      fetch(baseUrl + '/api/v1/auth/phone-login', {
+    // After OTP, check backend for user existence and get token if existing
+    const phone = document.getElementById('register-phone') ? document.getElementById('register-phone').value.trim() : '';
+    const code = document.getElementById('country-code') ? document.getElementById('country-code').value : '';
+    const baseUrl = window.BASE_URL || '';
+    try {
+      const resp = await fetch(baseUrl + '/api/v1/auth/phone-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: code + phone})
-      })
-        .then(async resp => {
-          const data = await resp.json().catch(() => ({}));
-          // Set AUTH_TOKEN to access_token if present
-          if (data && data.access_token) {
-            window.AUTH_TOKEN = data.access_token;
-            localStorage.setItem('AUTH_TOKEN', data.access_token);
-            console.log('AUTH_TOKEN set:', window.AUTH_TOKEN);
-          } else {
-            console.log('No access_token in response:', data);
-          }
-          console.log('Phone login response:', data);
-          window.location.href = "shipping.html";
-        })
-        .catch(() => {
-          window.location.href = "shipping.html";
-        });
+        body: JSON.stringify({ phone: code + phone })
+      });
+      if (resp.status === 404) {
+        // New user, show registration form
+        showRegistrationForm();
+        submitNewRegistration();
+
+      } else {
+        // Existing user, set token and redirect
+        const data = await resp.json().catch(() => ({}));
+        if (data && data.access_token) {
+          AuthToken.set(data.access_token);
+          console.log('AUTH_TOKEN set after phone-login:', AuthToken.get());
+        }
+        window.location.href = "shipping.html";
+      }
+    } catch (err) {
+      // On error, redirect anyway
+      window.location.href = "shipping.html";
     }
 
   } catch (err) {
@@ -631,16 +615,25 @@ function submitNewRegistration() {
   })
   .then(async resp => {
     if (resp.ok) {
+      console.log("Registration successful");
       msg.textContent = "Registered successfully!";
+            const data = await resp.json().catch(() => ({}));
+          console.log("Registration response data:", data);
+      if (data && data.access_token) {
+          AuthToken.set(data.access_token);
+          console.log('AUTH_TOKEN set after phone-login:', AuthToken.get());
+        }
       setTimeout(() => {
         window.location.href = "shipping.html";
       }, 800);
     } else {
       const data = await resp.json().catch(() => ({}));
+      console.log("Registration error response data:", data);
       msg.textContent = data.message || "Registration failed.";
     }
   })
-  .catch(() => {
+  .catch((e) => {
+    console.error("Registration error:", e);
     msg.textContent = "Registration failed. Please try again.";
   });
 }
@@ -676,6 +669,12 @@ window.setFirebasePhoneInput = setFirebasePhoneInput;
        } else {
           console.error("StoreService not found in Cart!");
        }
+        // Restore AUTH_TOKEN from AuthToken utility if present
+        const token = AuthToken.get();
+        console.log('AUTH_TOKEN on page load:', token);
+        if (token) {
+          console.log('AUTH_TOKEN restored:', token);
+        }
     });
 
     /* ---------------- CART LOGIC ---------------- */
@@ -796,16 +795,12 @@ function loginUser() {
       if (resp.ok) {
         // Set AUTH_TOKEN to access_token if present
         if (data && data.access_token) {
-          window.AUTH_TOKEN = data.access_token;
-          localStorage.setItem('AUTH_TOKEN', data.access_token);
-          console.log('AUTH_TOKEN set:', window.AUTH_TOKEN);
-          checkFollowStatusInParent();
-        } else {
-          console.log('No access_token in response:', data);
+          AuthToken.set(data.access_token);
+          console.log('AUTH_TOKEN set after login:', AuthToken.get());
         }
         msg.textContent = "Login successful!";
         setTimeout(() => {
-          window.location.href = "shipping.html";
+          window.location.reload();
         }, 500);
       } else {
         // Show exact API error message if available
@@ -816,61 +811,6 @@ function loginUser() {
       msg.textContent = "Login failed. Please try again.";
     });
 }
-
-// Helper to check follow status in parent index.html after login
-function checkFollowStatusInParent() {
-  try {
-    if (window.parent && window.parent.checkFollowStatus) {
-      window.parent.checkFollowStatus();
-    }
-  } catch (e) {
-    console.log('Could not call parent checkFollowStatus:', e);
-  }
-}
-
-// Add a checkout handler so the button works
-window.checkoutHandler = async function (event) {
-
-  // 🔐 Always get fresh token (or null)
-  const token = await window.getAuthToken();
-
-  if (!token) {
-    console.log("🔒 Checkout blocked → login required");
-
-    // Show login modal
-    const modal = document.getElementById('login-modal');
-    if (modal) {
-      modal.style.display = 'flex';
-      modal.style.zIndex = 99999;
-      modal.focus && modal.focus();
-    }
-
-    return;
-  }
-
-  // ✅ Logged in → proceed to shipping
-  console.log("🚀 Checkout allowed, going to shipping");
-  window.location.href = "shipping.html";
-};
-
-
-// Helper to always get the latest token
-function getAuthToken() {
-  // Always restore from localStorage if window.AUTH_TOKEN is missing
-  if (!window.AUTH_TOKEN) {
-    const token = localStorage.getItem("AUTH_TOKEN");
-    if (token) {
-      window.AUTH_TOKEN = token;
-      console.log('[getAuthToken] Restored AUTH_TOKEN from localStorage:', token);
-    }
-  }
-  const token = window.AUTH_TOKEN || localStorage.getItem("AUTH_TOKEN");
-  console.log("[getAuthToken] window.AUTH_TOKEN:", window.AUTH_TOKEN, "localStorage:", localStorage.getItem("AUTH_TOKEN"));
-  return token;
-}
-
-// On page load, restore AUTH_TOKEN from localStorage if present
-// ...restoration now handled at the top and in getAuthToken...
   </script>
 
 </body>

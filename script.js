@@ -1,3 +1,4 @@
+import AuthToken from './auth-token.js';
 // 🔥 FORCE store context for cart isolation
 
 document.addEventListener('DOMContentLoaded', async function () {
