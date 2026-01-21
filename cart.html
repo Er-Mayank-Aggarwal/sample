@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -315,7 +316,7 @@
 
         <div id="otp-section" class="otp-section" style="display:none; width:100%;">
           <input id="otp-code" type="text" class="input-box" placeholder="Enter 6-digit OTP" />
-          <button class="primary-btn" onclick="verifyOTP()">VERIFY OTP</button>
+          <button class="primary-btn" onclick="handleVerifyOTP()">VERIFY OTP</button>
           <button id="resend-otp-btn" class="primary-btn" style="background:#eee;color:#4280FD;margin-top:8px;" onclick="resendOTP()" disabled>Resend OTP <span id="resend-timer">30</span>s</button>
           <div id="otp-message" class="otp-message"></div>
           <div id="recaptcha-container" class="recaptcha-box"></div>
@@ -331,6 +332,299 @@
     // This ensures we get the cart specific to the current store
     let cart = {};
 
+    /* ==========================
+   cart.js (SCRIPT PART OF cart.html)
+   ========================== */
+
+// --- LOGIN / REGISTER UI ---
+
+window.showLoginSection = function() {
+  document.getElementById('login-section').style.display = 'block';
+  document.getElementById('register-section').style.display = 'none';
+  document.getElementById('otp-section').style.display = 'none';
+}
+
+window.showRegisterSection = function() {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('register-section').style.display = 'block';
+  document.getElementById('otp-section').style.display = 'none';
+}
+
+/* ================= OTP FLOW ================= */
+let resendTimerInterval = null;
+function startResendTimer() {
+  const btn = document.getElementById('resend-otp-btn');
+  const timerSpan = document.getElementById('resend-timer');
+  let timeLeft = 30;
+  if (btn) {
+    btn.disabled = true;
+    btn.style.fontWeight = 'normal';
+    btn.style.color = '#4280FD';
+  }
+  if (timerSpan) timerSpan.textContent = timeLeft;
+  if (resendTimerInterval) clearInterval(resendTimerInterval);
+  resendTimerInterval = setInterval(() => {
+    timeLeft--;
+    if (timerSpan) timerSpan.textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(resendTimerInterval);
+      if (btn) {
+        btn.disabled = false;
+        btn.style.fontWeight = 'bold';
+        btn.style.color = '#e53935';
+        btn.textContent = 'Resend OTP';
+      }
+      if (timerSpan) timerSpan.textContent = '0';
+    }
+  }, 1000);
+}
+
+function showOTPSection() {
+  const phone = document.getElementById('register-phone').value.trim();
+  const name = document.getElementById('register-name').value.trim();
+  const code = document.getElementById('country-code').value;
+  const msg = document.getElementById('register-message');
+
+  if (phone.length !== 10 || name.length < 3) {
+    msg.textContent = 'Enter valid name and 10-digit phone number.';
+    return;
+  }
+
+  msg.textContent = '';
+
+  // Set Firebase phone input
+  setFirebasePhoneInput(code, phone);
+
+  // CHECK PHONE IN BACKEND
+  window._phoneFound = null;
+  const baseUrl = window.BASE_URL;
+  const phoneApi = baseUrl + '/api/v1/auth/phone-login';
+
+  fetch(phoneApi, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: code + phone })
+  })
+  .then(async resp => {
+    if (resp.status === 404) {
+      window._phoneFound = false;
+      console.log("New user detected (404)");
+    } else if (resp.ok) {
+      window._phoneFound = true;
+      console.log("Existing user detected");
+    } else {
+      window._phoneFound = false;
+    }
+  })
+  .catch(() => { window._phoneFound = false; });
+
+  // Show loading on Generate OTP
+  const otpBtn = document.getElementById('generate-otp-btn');
+  if (otpBtn) {
+    otpBtn.disabled = true;
+    otpBtn.textContent = 'SENDING…';
+    otpBtn.style.opacity = '0.7';
+  }
+  // SEND OTP
+  window.sendOTP(function(success) {
+    if (otpBtn) {
+      otpBtn.disabled = false;
+      otpBtn.textContent = 'GENERATE OTP';
+      otpBtn.style.opacity = '1';
+    }
+    if (success) {
+      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('otp-section').style.display = 'block';
+      startResendTimer();
+    } else {
+      msg.textContent = 'Failed to send OTP.';
+    }
+  });
+}
+// ============ RESEND OTP TIMER ============
+
+
+/* ================= VERIFY OTP ================= */
+
+async function handleVerifyOTP() {
+  const msg = document.getElementById('otp-message');
+  const otp = document.getElementById('otp-code').value.trim();
+
+  if (!window.confirmationResult) {
+    msg.textContent = "Please request OTP first.";
+    return;
+  }
+
+  if (otp.length !== 6) {
+    msg.textContent = "Enter valid 6-digit OTP.";
+    return;
+  }
+
+  msg.textContent = "Verifying...";
+
+  try {
+    const result = await window.confirmationResult.confirm(otp);
+    console.log("OTP verified:", result.user);
+
+    // WAIT FOR BACKEND CHECK
+    let waited = 0;
+    while (window._phoneFound === null && waited < 3000) {
+      await new Promise(r => setTimeout(r, 100));
+      waited += 100;
+    }
+
+    if (window._phoneFound === false) {
+      // NEW USER
+      showRegistrationForm();
+    } else {
+      // EXISTING USER
+      // Optionally fetch user details from API using phone number
+      const phone = document.getElementById('register-phone') ? document.getElementById('register-phone').value.trim() : '';
+      const code = document.getElementById('country-code') ? document.getElementById('country-code').value : '';
+      const baseUrl = window.BASE_URL || '';
+      fetch(baseUrl + '/api/v1/auth/phone-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: code + phone})
+      })
+        .then(async resp => {
+          const data = await resp.json().catch(() => ({}));
+          console.log('Phone login response:', data);
+          window.location.href = "shipping.html";
+        })
+        .catch(() => {
+          window.location.href = "shipping.html";
+        });
+    }
+
+  } catch (err) {
+    console.error(err);
+    msg.textContent = "Invalid OTP. Try again.";
+  }
+}
+
+/* ========= ======== RESEND OTP ================= */
+function resendOTP() {
+  const phone = document.getElementById('register-phone').value.trim();
+  const code = document.getElementById('country-code').value;
+
+  // Reset Firebase hidden phone input
+  setFirebasePhoneInput(code, phone);
+
+  const btn = document.getElementById('resend-otp-btn');
+  const msg = document.getElementById('otp-message');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "SENDING…";
+  }
+
+  window.sendOTP(function(success) {
+    console.log("Resend OTP status:", success);
+    if (success) {
+      msg.textContent = "OTP resent successfully!";
+      // Reset button text and timer
+      if (btn) {
+        btn.innerHTML = 'Resend OTP <span id="resend-timer">30</span>s';
+      }
+      startResendTimer();
+    } else {
+      msg.textContent = "Failed to resend OTP. Try again.";
+      if (btn) btn.disabled = false;
+    }
+  });
+}
+
+/* ================= FINAL REGISTRATION UI ================= */
+
+function showRegistrationForm() {
+  document.getElementById('otp-section').style.display = 'none';
+
+  let regScreen = document.getElementById('post-otp-register-section');
+  if (!regScreen) {
+    regScreen = document.createElement('div');
+    regScreen.id = 'post-otp-register-section';
+    regScreen.style.width = '100%';
+
+    regScreen.innerHTML = `
+      <h3 style="margin-bottom:10px;">Complete Registration</h3>
+      <input id="newreg-email" type="email" class="input-box" placeholder="Email" />
+      <input id="newreg-password" type="password" class="input-box" placeholder="Password" />
+      <button class="primary-btn" onclick="submitNewRegistration()">REGISTER</button>
+      <div id="newreg-message" class="otp-message"></div>
+    `;
+
+    document.querySelector('.login-card').appendChild(regScreen);
+  }
+
+  regScreen.style.display = 'block';
+}
+
+/* ================= FINAL REGISTER SUBMIT ================= */
+
+function submitNewRegistration() {
+  // Get name and number from previous registration step
+  const name = document.getElementById('register-name') ? document.getElementById('register-name').value.trim() : '';
+  const phone = document.getElementById('register-phone') ? document.getElementById('register-phone').value.trim() : '';
+  const code = document.getElementById('country-code') ? document.getElementById('country-code').value : '';
+  const email = document.getElementById('newreg-email').value.trim();
+  const password = document.getElementById('newreg-password').value.trim();
+  const msg = document.getElementById('newreg-message');
+
+  if (!email || password.length < 6) {
+    msg.textContent = "Enter valid email and password.";
+    return;
+  }
+
+  // Compose user details as JSON
+  const userDetails = {
+    name: name,
+    phone: code + phone,
+    email: email,
+    password: password
+  };
+
+  // Make POST request to register endpoint
+  const baseUrl = window.BASE_URL || '';
+  fetch(baseUrl + '/api/v1/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userDetails)
+  })
+  .then(async resp => {
+    if (resp.ok) {
+      msg.textContent = "Registered successfully!";
+      setTimeout(() => {
+        window.location.href = "shipping.html";
+      }, 800);
+    } else {
+      const data = await resp.json().catch(() => ({}));
+      msg.textContent = data.message || "Registration failed.";
+    }
+  })
+  .catch(() => {
+    msg.textContent = "Registration failed. Please try again.";
+  });
+}
+
+/* ================= PHONE HELPER ================= */
+
+function setFirebasePhoneInput(code, phone) {
+  let phoneInput = document.getElementById('phone-number');
+  if (!phoneInput) {
+    phoneInput = document.createElement('input');
+    phoneInput.type = 'hidden';
+    phoneInput.id = 'phone-number';
+    document.body.appendChild(phoneInput);
+  }
+
+  phoneInput.value = code + phone;
+}
+
+// Expose globally for firebase-login.js
+window.setFirebasePhoneInput = setFirebasePhoneInput;
+
+
     document.addEventListener('DOMContentLoaded', async () => {
        // A. Get Store Data for Title
        if(window.StoreService) {
@@ -345,142 +639,6 @@
           console.error("StoreService not found in Cart!");
        }
     });
-
-    // --- LOGIN/REGISTER/OTP LOGIC ---
-    window.showLoginSection = function() {
-      document.getElementById('login-section').style.display = 'block';
-      document.getElementById('register-section').style.display = 'none';
-      document.getElementById('otp-section').style.display = 'none';
-    }
-    window.showRegisterSection = function() {
-      document.getElementById('login-section').style.display = 'none';
-      document.getElementById('register-section').style.display = 'block';
-      document.getElementById('otp-section').style.display = 'none';
-    }
-    let resendTimerInterval = null;
-    function showOTPSection() {
-      // Validate phone and name
-      const phone = document.getElementById('register-phone').value.trim();
-      const name = document.getElementById('register-name').value.trim();
-      const code = document.getElementById('country-code').value;
-      const msg = document.getElementById('register-message');
-      if (phone.length !== 10 || name.length < 3) {
-        msg.textContent = 'Enter valid name and 10-digit phone number.';
-        return;
-      }
-      msg.textContent = '';
-      // Set phone number for Firebase OTP (format: +911234567890)
-      setFirebasePhoneInput(code, phone);
-      window.setGenerateOTPLoading(true);
-      // Patch window.sendOTP to accept a callback for result
-      sendOTP(function(success, errorMsg) {
-        window.setGenerateOTPLoading(false);
-        if (success) {
-          document.getElementById('register-section').style.display = 'none';
-          document.getElementById('otp-section').style.display = 'block';
-          startResendTimer(true);
-        } else {
-          msg.textContent = errorMsg || 'Failed to send OTP. Try again.';
-        }
-      });
-    }
-
-
-    function resendOTP() {
-      const phone = document.getElementById('register-phone').value.trim();
-      const code = document.getElementById('country-code').value;
-      setFirebasePhoneInput(code, phone);
-      window.sendOTP();
-      startResendTimer(false);
-    }
-
-    function startResendTimer(isFirst) {
-      const btn = document.getElementById('resend-otp-btn');
-      let timeLeft = 30;
-      btn.disabled = true;
-      btn.innerHTML = `Resend OTP <span id="resend-timer">${timeLeft}</span>s`;
-      if (resendTimerInterval) clearInterval(resendTimerInterval);
-      resendTimerInterval = setInterval(() => {
-        timeLeft--;
-        btn.innerHTML = `Resend OTP <span id="resend-timer">${timeLeft}</span>s`;
-        if (timeLeft <= 0) {
-          clearInterval(resendTimerInterval);
-          btn.disabled = false;
-          btn.innerHTML = 'Resend OTP';
-        }
-      }, 1000);
-    }
-    function loginUser() {
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-      const msg = document.getElementById('login-message');
-      if (!email || !password) {
-        msg.textContent = 'Please enter email and password.';
-        return;
-      }
-      msg.textContent = 'Logging in...';
-      fetch('https://listerrboardecom-asanb9fzg4ghbza2.centralindia-01.azurewebsites.net/api/v1/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          grant_type: 'password',
-          username: email,
-          password: password
-        })
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.access_token) {
-            localStorage.setItem('access_token', data.access_token);
-            localStorage.setItem('token_type', data.token_type || 'bearer');
-            msg.textContent = 'Login successful!';
-            // Optionally close modal or reload page
-          } else {
-            msg.textContent = 'Incorrect email or password.';
-          }
-        })
-        .catch(() => {
-          msg.textContent = 'Login failed. Please try again.';
-        });
-    }
-
-    function verifyOTP() {
-      const otp = document.getElementById('otp-code').value.trim();
-      const msg = document.getElementById('otp-message');
-      if (otp.length !== 6) {
-        msg.textContent = 'Enter valid 6-digit OTP.';
-        return;
-      }
-      msg.textContent = 'Verifying OTP...';
-      // Set OTP code for Firebase
-      document.getElementById('otp-code').value = otp;
-      window.verifyOTP();
-    }
-
-    // Helper to set the phone number in the hidden phone input for Firebase OTP
-    function setFirebasePhoneInput(code, phone) {
-      let phoneInput = document.getElementById('phone-number');
-      if (!phoneInput) {
-        phoneInput = document.createElement('input');
-        phoneInput.type = 'hidden';
-        phoneInput.id = 'phone-number';
-        document.body.appendChild(phoneInput);
-      }
-      // Ensure only one country code
-      let formatted = phone;
-      if (phone.startsWith('0')) formatted = phone.substring(1);
-      if (!formatted.startsWith(code.replace('+', ''))) {
-        formatted = code + formatted;
-      } else {
-        formatted = '+' + formatted;
-      }
-      phoneInput.value = formatted;
-    }
-
-    // Show login by default
-    document.addEventListener('DOMContentLoaded', showLoginSection);
 
     /* ---------------- CART LOGIC ---------------- */
 
@@ -567,9 +725,54 @@
       if (confirm("Clear entire cart?")) {
         cart = {};
         saveCart();
+      btn.innerHTML = 'Resend OTP <span id="resend-timer">' + timeLeft + '</span>s';
         renderCart();
       }
     };
+
+    // LOGIN FUNCTION
+function loginUser() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  const msg = document.getElementById('login-message');
+
+    if (!email || !password) {
+    msg.textContent = "Enter email and password.";
+    return;
+  }
+
+    msg.textContent = "Logging in...";
+  const baseUrl = window.BASE_URL || '';
+  const params = new URLSearchParams();
+  params.append('username', email);
+  params.append('password', password);
+
+  fetch(baseUrl + '/api/v1/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString()
+  })
+    .then(async resp => {
+      const data = await resp.json().catch(() => ({}));
+      console.log('Login response:', data);
+      if (resp.ok) {
+        // Set AUTH_TOKEN to access_token if present
+        if (data && data.access_token) {
+          window.AUTH_TOKEN = data.access_token;
+        }
+        msg.textContent = "Login successful!";
+        setTimeout(() => {
+          window.location.href = "shipping.html";
+        }, 500);
+      } else {
+        // Show exact API error message if available
+        msg.textContent = data.detail || data.message || (typeof data === 'string' && data) || JSON.stringify(data) || "Login failed.";
+      }
+    })
+    .catch(() => {
+      msg.textContent = "Login failed. Please try again.";
+    });
+}
   </script>
 
 </body>

@@ -1,4 +1,7 @@
-// firebase-login.js (Firebase v9+ modular)
+/* ==========================
+   firebase-login.js (FULL)
+   ========================== */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import {
   getAuth,
@@ -23,231 +26,104 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 auth.useDeviceLanguage();
 
-// ==========================================
-// 1. EXPOSE AUTH & FIREBASE UTILS GLOBALLY (Required for SSO & OTP)
-// ==========================================
+// ===== GLOBAL EXPORTS =====
 window.FirebaseAuth = auth;
-window.FirebaseListener = onAuthStateChanged;
-window.FirebaseSignOut = signOut;
 window.RecaptchaVerifier = RecaptchaVerifier;
 window.signInWithPhoneNumber = signInWithPhoneNumber;
+window.confirmationResult = null;
 
-let confirmationResult = null;
-let authReady = false;
 let cachedUser = null;
+let authReady = false;
 
-// ==========================================
-// 2. AUTH STATE LISTENER
-// ==========================================
+// AUTH STATE LISTENER
 onAuthStateChanged(auth, (user) => {
   cachedUser = user;
   authReady = true;
 
   if (user) {
-    console.log("Global Auth: User Logged In:", user.uid);
-    // If we are on the cart page and just logged in via modal, 
-    // we might want to auto-redirect or just let the user click checkout again.
+    console.log("User logged in:", user.uid);
   } else {
-    console.log("Global Auth: User Logged Out");
+    console.log("User logged out");
   }
 });
 
-window.getCurrentUser = function () {
-  return authReady ? cachedUser : null;
-};
-
 window.logout = function () {
-    signOut(auth).then(() => {
-        console.log("Signed out successfully");
-        location.reload(); // Reload page to reset UI
-    }).catch((error) => {
-        console.error("Sign out error", error);
-    });
+  signOut(auth).then(() => {
+    location.reload();
+  });
 };
 
-/* ---------------- UI HELPERS ---------------- */
-
-window.setGenerateOTPLoading = function (isLoading) {
-  const btn = document.getElementById("generate-otp-btn");
-  if (!btn) return;
-
-  if (isLoading) {
-    btn.disabled = true;
-    btn.textContent = "SENDING…";
-    btn.style.opacity = "0.7";
-  } else {
-    btn.disabled = false;
-    btn.textContent = "GENERATE OTP";
-    btn.style.opacity = "1";
-  }
-}
-
-window.showLoginModal = function () {
-  const modal = document.getElementById("login-modal");
-  if(modal) {
-      modal.style.display = "flex";
-      // Reset UI state when opening
-      const otpSection = document.getElementById("otp-section");
-      const otpWrapper = document.getElementById("generate-otp-wrapper");
-      const otpMsg = document.getElementById("otp-message");
-      
-      if(otpSection) otpSection.style.display = "none";
-      if(otpWrapper) otpWrapper.style.display = "block";
-      if(otpMsg) otpMsg.textContent = "";
-  }
-};
-
-window.hideLoginModal = function (e) {
-  // If triggered by click event, check if clicked outside card
-  if (e && e.target !== e.currentTarget) return;
-  
-  const modal = document.getElementById("login-modal");
-  if(modal) modal.style.display = "none";
-};
-
-/* ---------------- CHECKOUT HANDLER ---------------- */
-
+// CHECKOUT HANDLER
 window.checkoutHandler = function (e) {
   if (e) e.preventDefault();
 
   if (!authReady) {
-    console.log("Auth not ready, waiting...");
-    // Simple retry
     setTimeout(() => window.checkoutHandler(e), 200);
     return;
   }
 
   if (cachedUser) {
-    // Logged in -> Go to Shipping
     window.location.href = "shipping.html";
   } else {
-    // Not Logged in -> Show Modal
-    window.showLoginModal();
+    const modal = document.getElementById("login-modal");
+    if (modal) modal.style.display = "flex";
   }
 };
 
+/* ================= OTP SEND ================= */
 
-/* ---------------- OTP LOGIC ---------------- */
+let recaptchaInitialized = false;
 
-window.sendOTP = function (callback) {
+window.sendOTP = async function (callback) {
   const phoneInput = document.getElementById("phone-number");
-  if(!phoneInput) {
-    if (callback) callback(false, "Phone input not found");
+  const otpMsg = document.getElementById("otp-message");
+
+  if (!phoneInput) {
+    otpMsg.textContent = "Phone input not found";
+    callback && callback(false);
     return;
   }
 
-  const phone = phoneInput.value.trim();
-  const phoneNumber = phone;
-
+  const phoneNumber = phoneInput.value.trim();
   console.log("Sending OTP to:", phoneNumber);
 
-  const otpMsg = document.getElementById("otp-message");
-
-  // Accept any country code, min 8 digits after +
   if (!/^\+\d{8,15}$/.test(phoneNumber)) {
-    if(otpMsg) otpMsg.textContent = "Enter a valid phone number";
-    window.setGenerateOTPLoading(false);
-    if (callback) callback(false, "Enter a valid phone number");
+    otpMsg.textContent = "Enter a valid phone number";
+    callback && callback(false);
     return;
   }
 
-  // Recaptcha Setup
-  if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: () => {
-          console.log("reCAPTCHA solved");
-        }
-      },
-      auth
+  try {
+    // 🔥 CREATE RECAPTCHA ONLY ONCE
+    if (!recaptchaInitialized) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        { size: "invisible" },
+        auth
+      );
+
+      await window.recaptchaVerifier.render();
+      recaptchaInitialized = true;
+      console.log("reCAPTCHA rendered once ✔️");
+    }
+
+    // 🔹 JUST REUSE SAME VERIFIER FOR RESEND
+    const result = await signInWithPhoneNumber(
+      auth,
+      phoneNumber,
+      window.recaptchaVerifier
     );
+
+    window.confirmationResult = result;
+    console.log("OTP sent successfully");
+
+    otpMsg.textContent = "OTP sent!";
+    callback && callback(true);
+
+  } catch (error) {
+    console.error("OTP ERROR:", error);
+    otpMsg.textContent = error.message || "Failed to send OTP.";
+    callback && callback(false);
   }
-
-  signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
-    .then((result) => {
-      confirmationResult = result;
-
-      // Update UI
-      const genWrapper = document.getElementById("generate-otp-wrapper");
-      const otpSection = document.getElementById("otp-section");
-      
-      if(genWrapper) genWrapper.style.display = "none";
-      if(otpSection) {
-          otpSection.style.display = "block";
-          otpSection.offsetHeight; // force reflow
-          otpSection.style.animation = "slideUp 0.25s ease";
-      }
-      if(otpMsg) otpMsg.textContent = "OTP sent!";
-      window.setGenerateOTPLoading(false);
-      if (callback) callback(true);
-    })
-    .catch((error) => {
-      console.error(error);
-      if(otpMsg) otpMsg.textContent = "Failed to send OTP. Try again.";
-      window.setGenerateOTPLoading(false);
-      if (callback) callback(false, "Failed to send OTP. Try again.");
-      // Reset Recaptcha if failed
-      if(window.recaptchaVerifier) {
-          window.recaptchaVerifier.clear();
-          window.recaptchaVerifier = null;
-      }
-    });
 };
 
-function resetOTPUI() {
-  const otpSection = document.getElementById("otp-section");
-  const genWrapper = document.getElementById("generate-otp-wrapper");
-  const otpMsg = document.getElementById("otp-message");
-
-  if(otpSection) otpSection.style.display = "none";
-  if(genWrapper) genWrapper.style.display = "block";
-  if(otpMsg) otpMsg.textContent = "";
-  window.setGenerateOTPLoading(false);
-}
-
-// Safely add listeners if elements exist
-const pInput = document.getElementById("phone-number");
-const nInput = document.getElementById("user-name");
-if(pInput) pInput.addEventListener("input", resetOTPUI);
-if(nInput) nInput.addEventListener("input", resetOTPUI);
-
-
-window.verifyOTP = function () {
-  const codeInput = document.getElementById("otp-code");
-  if(!codeInput) return;
-  
-  const code = codeInput.value.trim();
-  const otpMsg = document.getElementById("otp-message");
-
-  if (!confirmationResult) {
-    if(otpMsg) otpMsg.textContent = "Please request OTP first.";
-    return;
-  }
-
-  confirmationResult
-    .confirm(code)
-    .then((result) => {
-      console.log("Logged in successfully:", result.user.uid);
-      
-      // Hide Modal
-      window.hideLoginModal();
-      
-      // If we are on shipping page, this might trigger a reload via listener, 
-      // but if we are on Cart page, we check if we need to redirect.
-      
-      // If a callback exists (e.g. from index.html)
-      if(window.onLoginSuccess) {
-          window.onLoginSuccess(result.user);
-      } else if (window.location.pathname.includes('cart.html')) {
-          // If in cart, assume user wanted to checkout
-          window.location.href = "shipping.html";
-      }
-      
-    })
-    .catch((error) => {
-      console.error(error);
-      if(otpMsg) otpMsg.textContent = "Invalid OTP. Try again.";
-    });
-};

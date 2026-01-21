@@ -332,75 +332,81 @@
     </div>
 
     <script>
+      // Cache storeId and BASE_URL globally for instant access
+      let CACHED_STORE_ID = null;
+      let CACHED_BASE_URL = null;
+
       document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Fetch Data from store-service.js
-  const data = await StoreService.getStoreData();
+        // 1. Fetch Data from store-service.js
+        const data = await StoreService.getStoreData();
 
-  if (data) {
-    // A. Update Name & Title
-    document.getElementById('store-name').textContent = data.name;
-    document.title = data.name + " - Listerr Edition";
+        if (data) {
+          // Cache storeId and BASE_URL
+          CACHED_STORE_ID = data.id;
+          if (window.BASE_URL) {
+            CACHED_BASE_URL = window.BASE_URL;
+          } else if (window.StoreService && window.StoreService.BASE_URL) {
+            CACHED_BASE_URL = window.StoreService.BASE_URL;
+          } else {
+            try {
+              CACHED_BASE_URL = (await import('./store-service.js')).BASE_URL;
+            } catch (e) {}
+          }
 
-    // B. Update Logo
-    const logoImg = document.getElementById('store-logo');
-    if (data.logo) {
-      logoImg.src = data.logo;
-    }
+          // A. Update Name & Title
+          document.getElementById('store-name').textContent = data.name;
+          document.title = data.name + " - Listerr Edition";
 
-    // C. Update Follow Button Status using API (with BASE_URL)
-    const followBtn = document.getElementById('follow-btn');
-    let BASE_URL = null;
-    if (window.BASE_URL) {
-      BASE_URL = window.BASE_URL;
-    } else if (window.StoreService && window.StoreService.BASE_URL) {
-      BASE_URL = window.StoreService.BASE_URL;
-    } else {
-      try {
-        BASE_URL = (await import('./store-service.js')).BASE_URL;
-      } catch (e) {}
-    }
-    try {
-      const resp = await fetch(`${BASE_URL}/api/v1/stores/${data.id}/follow-status`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${window.AUTH_TOKEN}`
+          // B. Update Logo
+          const logoImg = document.getElementById('store-logo');
+          if (data.logo) {
+            logoImg.src = data.logo;
+          }
+
+          // C. Update Follow Button Status using API (with BASE_URL)
+          const followBtn = document.getElementById('follow-btn');
+          try {
+            const resp = await fetch(`${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow-status`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${window.AUTH_TOKEN}`
+              }
+            });
+            if (resp.ok) {
+              const result = await resp.json();
+              if (result && result.is_following === true) {
+                followBtn.classList.add('following');
+                followBtn.textContent = 'Following';
+              } else {
+                followBtn.classList.remove('following');
+                followBtn.textContent = 'Follow';
+              }
+            } else {
+              followBtn.classList.remove('following');
+              followBtn.textContent = 'Follow';
+            }
+          } catch (e) {
+            followBtn.classList.remove('following');
+            followBtn.textContent = 'Follow';
+          }
+
+          // D. Inject Video (Correctly for AMP)
+          // We must inject the entire amp-video tag to ensure the new source loads
+          const videoLayer = document.querySelector('amp-story-grid-layer');
+          if (videoLayer && data.video) {
+            videoLayer.innerHTML = `
+              <amp-video 
+                layout="fill" 
+                autoplay 
+                loop 
+                poster="${data.poster || ''}"
+                id="dynamic-video">
+                <source src="${data.video}" type="video/mp4">
+              </amp-video>
+            `;
+          }
         }
       });
-      if (resp.ok) {
-        const result = await resp.json();
-        if (result && result.is_following === true) {
-          followBtn.classList.add('following');
-          followBtn.textContent = 'Following';
-        } else {
-          followBtn.classList.remove('following');
-          followBtn.textContent = 'Follow';
-        }
-      } else {
-        followBtn.classList.remove('following');
-        followBtn.textContent = 'Follow';
-      }
-    } catch (e) {
-      followBtn.classList.remove('following');
-      followBtn.textContent = 'Follow';
-    }
-
-    // D. Inject Video (Correctly for AMP)
-    // We must inject the entire amp-video tag to ensure the new source loads
-    const videoLayer = document.querySelector('amp-story-grid-layer');
-    if (videoLayer && data.video) {
-      videoLayer.innerHTML = `
-        <amp-video 
-          layout="fill" 
-          autoplay 
-          loop 
-          poster="${data.poster || ''}"
-          id="dynamic-video">
-          <source src="${data.video}" type="video/mp4">
-        </amp-video>
-      `;
-    }
-  }
-});
       // Try to set user image if available (replace with your logic)
       // Example: if you have a user object with photoURL
       if (window.getCurrentUser && window.getCurrentUser()) {
@@ -413,28 +419,9 @@
       // Follow button logic with API integration
       async function toggleFollow(btn) {
         // Get store id from StoreService.getStoreData()
-        let storeId = null;
-        let BASE_URL = null;
-        if (window.StoreService && StoreService.getStoreData) {
-          const data = await StoreService.getStoreData();
-          storeId = data && data.id;
-        }
-        if (window.StoreService && window.StoreService.getStoreId) {
-          storeId = storeId || window.StoreService.getStoreId();
-        }
-        if (window.BASE_URL) {
-          BASE_URL = window.BASE_URL;
-        } else if (window.StoreService && window.StoreService.BASE_URL) {
-          BASE_URL = window.StoreService.BASE_URL;
-        } else {
-          // fallback: try to get from script
-          try {
-            BASE_URL = (await import('./store-service.js')).BASE_URL;
-          } catch (e) {}
-        }
-        if (!storeId || !BASE_URL) return;
+        if (!CACHED_STORE_ID || !CACHED_BASE_URL) return;
 
-        const url = `${BASE_URL}/api/v1/stores/${storeId}/follow`;
+        const url = `${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow`;
         // Optimistic UI update
         const wasFollowing = btn.classList.contains('following');
         if (wasFollowing) {
@@ -469,7 +456,7 @@
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${window.AUTH_TOKEN}`
               },
-              body: JSON.stringify({ store_id: parseInt(storeId) })
+              body: JSON.stringify({ store_id: parseInt(CACHED_STORE_ID) })
             });
             if (resp.status !== 201) {
               // Revert if failed
