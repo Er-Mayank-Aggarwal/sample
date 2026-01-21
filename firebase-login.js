@@ -1,5 +1,5 @@
 /* ==========================
-   firebase-login.js (FULL)
+   firebase-login.js (FIXED)
    ========================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
@@ -8,10 +8,38 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   onAuthStateChanged,
-  signOut
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-// Firebase config
+
+/* =====================================
+   LOGIN GUARD HELPER
+===================================== */
+
+window.requireLogin = function (onSuccess) {
+  const user = window.FirebaseAuth.currentUser;
+
+  if (user) {
+    // Already logged in ✅
+    onSuccess && onSuccess();
+    return true;
+  }
+
+  // ❌ Not logged in → show login modal
+  console.log("🔒 Login required, showing modal");
+
+  const modal = document.getElementById("login-modal");
+  if (modal) {
+    modal.style.display = "flex";
+  } else {
+    alert("Please login to continue");
+  }
+
+  return false;
+};
+
+// 🔥 Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyA78LZZJSGAundFO3Uus-Eoqas4N65s5Vs",
   authDomain: "localhost",
@@ -22,9 +50,13 @@ const firebaseConfig = {
   measurementId: "G-FM6L3XHLTB"
 };
 
+// 🔹 Init Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 auth.useDeviceLanguage();
+
+// 🔥 VERY IMPORTANT: Persist login across pages & reloads
+await setPersistence(auth, browserLocalPersistence);
 
 // ===== GLOBAL EXPORTS =====
 window.FirebaseAuth = auth;
@@ -35,40 +67,59 @@ window.confirmationResult = null;
 let cachedUser = null;
 let authReady = false;
 
-// AUTH STATE LISTENER
-onAuthStateChanged(auth, (user) => {
-  cachedUser = user;
+/* =====================================
+   AUTH STATE LISTENER (FIXED VERSION)
+===================================== */
+
+onAuthStateChanged(auth, async (user) => {
   authReady = true;
+  cachedUser = user;
 
   if (user) {
-    console.log("User logged in:", user.uid);
+    console.log("✅ User logged in:", user.uid);
+
+    // 🔥 Always refresh token safely
+    const token = await user.getIdToken(true);
+
+    // Save everywhere
+    window.AUTH_TOKEN = token;
+    localStorage.setItem("AUTH_TOKEN", token);
+
+    console.log("🔐 AUTH TOKEN SET:", token.slice(0, 25) + "...");
+
   } else {
-    console.log("User logged out");
+    // ❌ DO NOT CLEAR TOKEN HERE
+    // Firebase takes time to restore session on page load
+    console.log("⏳ Firebase restoring session... keeping existing token");
+
+    // If token already exists, trust it
+    const existing = localStorage.getItem("AUTH_TOKEN");
+    if (existing) {
+      window.AUTH_TOKEN = existing;
+      console.log("♻️ Reusing saved token from localStorage");
+    }
   }
 });
 
-window.logout = function () {
-  signOut(auth).then(() => {
-    location.reload();
-  });
-};
 
-// CHECKOUT HANDLER
-window.checkoutHandler = function (e) {
-  if (e) e.preventDefault();
+/* =====================================
+   HELPER: ALWAYS GET LATEST TOKEN
+===================================== */
 
-  if (!authReady) {
-    setTimeout(() => window.checkoutHandler(e), 200);
-    return;
+window.getAuthToken = async function () {
+  const user = auth.currentUser;
+
+  if (user) {
+    const token = await user.getIdToken(true);
+    window.AUTH_TOKEN = token;
+    localStorage.setItem("AUTH_TOKEN", token);
+    return token;
   }
 
-  if (cachedUser) {
-    window.location.href = "shipping.html";
-  } else {
-    const modal = document.getElementById("login-modal");
-    if (modal) modal.style.display = "flex";
-  }
+  // fallback from storage
+  return localStorage.getItem("AUTH_TOKEN");
 };
+
 
 /* ================= OTP SEND ================= */
 
@@ -85,16 +136,16 @@ window.sendOTP = async function (callback) {
   }
 
   const phoneNumber = phoneInput.value.trim();
-  console.log("Sending OTP to:", phoneNumber);
+  console.log("📨 Sending OTP to:", phoneNumber);
 
   if (!/^\+\d{8,15}$/.test(phoneNumber)) {
-    otpMsg.textContent = "Enter a valid phone number";
+    otpMsg.textContent = "Enter a valid phone number with country code";
     callback && callback(false);
     return;
   }
 
   try {
-    // 🔥 CREATE RECAPTCHA ONLY ONCE
+    // 🔥 Create reCAPTCHA only once
     if (!recaptchaInitialized) {
       window.recaptchaVerifier = new RecaptchaVerifier(
         "recaptcha-container",
@@ -104,10 +155,10 @@ window.sendOTP = async function (callback) {
 
       await window.recaptchaVerifier.render();
       recaptchaInitialized = true;
-      console.log("reCAPTCHA rendered once ✔️");
+      console.log("🤖 reCAPTCHA rendered once ✔️");
     }
 
-    // 🔹 JUST REUSE SAME VERIFIER FOR RESEND
+    // 🔹 Send OTP
     const result = await signInWithPhoneNumber(
       auth,
       phoneNumber,
@@ -115,15 +166,14 @@ window.sendOTP = async function (callback) {
     );
 
     window.confirmationResult = result;
-    console.log("OTP sent successfully");
+    console.log("📩 OTP sent successfully");
 
     otpMsg.textContent = "OTP sent!";
     callback && callback(true);
 
   } catch (error) {
-    console.error("OTP ERROR:", error);
+    console.error("❌ OTP ERROR:", error);
     otpMsg.textContent = error.message || "Failed to send OTP.";
     callback && callback(false);
   }
 };
-

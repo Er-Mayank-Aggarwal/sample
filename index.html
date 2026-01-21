@@ -327,11 +327,21 @@
 
         <div class="header-logo" id="store-name">Loading...</div>
 
-        <button class="header-follow-btn" id="follow-btn" onclick="toggleFollow(this)">Follow</button>
+<button class="header-follow-btn" id="follow-btn"
+  onclick="requireLogin(() => toggleFollow(this))">
+  Follow
+</button>
       </div>
     </div>
 
     <script>
+      // Helper to always get the latest token
+function getAuthToken() {
+  const token = window.AUTH_TOKEN || localStorage.getItem("AUTH_TOKEN");
+  console.log("[getAuthToken] window.AUTH_TOKEN:", window.AUTH_TOKEN, "localStorage:", localStorage.getItem("AUTH_TOKEN"));
+  return token;
+}
+
       // Cache storeId and BASE_URL globally for instant access
       let CACHED_STORE_ID = null;
       let CACHED_BASE_URL = null;
@@ -365,30 +375,37 @@
 
           // C. Update Follow Button Status using API (with BASE_URL)
           const followBtn = document.getElementById('follow-btn');
-          try {
-            const resp = await fetch(`${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow-status`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${window.AUTH_TOKEN}`
-              }
-            });
-            if (resp.ok) {
-              const result = await resp.json();
-              if (result && result.is_following === true) {
-                followBtn.classList.add('following');
-                followBtn.textContent = 'Following';
-              } else {
-                followBtn.classList.remove('following');
-                followBtn.textContent = 'Follow';
-              }
-            } else {
-              followBtn.classList.remove('following');
-              followBtn.textContent = 'Follow';
-            }
-          } catch (e) {
-            followBtn.classList.remove('following');
-            followBtn.textContent = 'Follow';
-          }
+
+try {
+  const token = getAuthToken();
+  if (!token) throw "No token yet";
+
+  const resp = await fetch(`${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow-status`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (resp.ok) {
+    const result = await resp.json();
+    if (result && result.is_following === true) {
+      followBtn.classList.add('following');
+      followBtn.textContent = 'Following';
+    } else {
+      followBtn.classList.remove('following');
+      followBtn.textContent = 'Follow';
+    }
+  } else {
+    followBtn.classList.remove('following');
+    followBtn.textContent = 'Follow';
+  }
+} catch (e) {
+  console.log("Follow status skipped:", e);
+  followBtn.classList.remove('following');
+  followBtn.textContent = 'Follow';
+}
+
 
           // D. Inject Video (Correctly for AMP)
           // We must inject the entire amp-video tag to ensure the new source loads
@@ -421,6 +438,11 @@
         // Get store id from StoreService.getStoreData()
         if (!CACHED_STORE_ID || !CACHED_BASE_URL) return;
 
+        const token = getAuthToken();
+        if (!token) {
+          alert("Please login first");
+          return;
+        }
         const url = `${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow`;
         // Optimistic UI update
         const wasFollowing = btn.classList.contains('following');
@@ -432,7 +454,7 @@
             const resp = await fetch(url, {
               method: 'DELETE',
               headers: {
-                'Authorization': `Bearer ${window.AUTH_TOKEN}`
+                'Authorization': `Bearer ${token}`
               }
             });
             if (resp.status !== 200) {
@@ -454,7 +476,7 @@
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${window.AUTH_TOKEN}`
+                'Authorization': `Bearer ${token}`
               },
               body: JSON.stringify({ store_id: parseInt(CACHED_STORE_ID) })
             });
@@ -470,6 +492,42 @@
           }
         }
       }
+
+      // Expose a function in index.html to check follow status (for iframe calls)
+window.checkFollowStatus = async function() {
+  try {
+    const followBtn = document.getElementById('follow-btn');
+    const token = getAuthToken();
+    if (!token) throw "No token yet";
+    if (!CACHED_BASE_URL || !CACHED_STORE_ID) return;
+    const resp = await fetch(`${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow-status`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (resp.ok) {
+      const result = await resp.json();
+      if (result && result.is_following === true) {
+        followBtn.classList.add('following');
+        followBtn.textContent = 'Following';
+      } else {
+        followBtn.classList.remove('following');
+        followBtn.textContent = 'Follow';
+      }
+    } else {
+      followBtn.classList.remove('following');
+      followBtn.textContent = 'Follow';
+    }
+  } catch (e) {
+    console.log("Follow status skipped:", e);
+    const followBtn = document.getElementById('follow-btn');
+    if (followBtn) {
+      followBtn.classList.remove('following');
+      followBtn.textContent = 'Follow';
+    }
+  }
+}
     </script>
 
     <div class="swipe-cta-container" id="swipe-trigger" onclick="openCatalog()">
@@ -505,7 +563,7 @@
       </div>
       <div class="catalog-content"></div>
     </div>
-
+<script type="module" src="firebase-login.js"></script>
   </div>
 
   <script src="https://cdn.ampproject.org/v0.js" async></script>
@@ -513,6 +571,7 @@
   <script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>
 
   <script>
+    
     // State variable to track if we are inside a product page
     let isProductView = false;
 
@@ -557,25 +616,89 @@
 
     // 3. Open Cart
     function openCart() {
-      const content = document.querySelector('.catalog-content');
 
-      // 1. Stop container scrolling (iframe handles it)
-      content.style.overflow = 'hidden';
+  // 🔐 If not logged in, stop and show login modal
+  if (!window.FirebaseAuth.currentUser && !localStorage.getItem("AUTH_TOKEN")) {
+    console.log("🔒 Cart access blocked → login required");
 
-      // 2. Hide only the internal "Menu" header
-      document.querySelector('.catalog-header').style.display = 'none';
-
-      // 3. Keep Main App Header visible (since we are only 90%)
-      document.querySelector('.app-header').style.display = 'flex';
-
-      // 4. Ensure Drawer is 90% with rounded corners
-      const drawer = document.getElementById('catalog-drawer');
-      drawer.style.height = '90%';
-      drawer.style.borderRadius = '25px 25px 0 0';
-
-      content.innerHTML = '<iframe src="cart.html" style="width:100%; height:100%; border:none; display:block; border-radius: 25px 25px 0 0;"></iframe>';
-      drawer.classList.add('open');
+    // Load cart iframe if not already loaded
+    const content = document.querySelector('.catalog-content');
+    let cartFrame = content.querySelector('iframe');
+    if (!cartFrame || !cartFrame.src.includes('cart.html')) {
+      content.innerHTML = `
+        <iframe 
+          src="cart.html" 
+          id="cart-iframe"
+          style="width:100%; height:100%; border:none; display:block; border-radius: 25px 25px 0 0;">
+        </iframe>
+      `;
+      cartFrame = content.querySelector('iframe');
     }
+
+    // Wait for iframe to load, then call showLoginModal
+    cartFrame.onload = function() {
+      if (cartFrame.contentWindow && cartFrame.contentWindow.showLoginModal) {
+        cartFrame.contentWindow.showLoginModal();
+      } else {
+        // Try again after a short delay if not ready
+        setTimeout(() => {
+          if (cartFrame.contentWindow && cartFrame.contentWindow.showLoginModal) {
+            cartFrame.contentWindow.showLoginModal();
+          }
+        }, 300);
+      }
+    };
+    // If already loaded, call immediately
+    if (cartFrame.contentWindow && cartFrame.contentWindow.showLoginModal) {
+      cartFrame.contentWindow.showLoginModal();
+    }
+
+    // Open the drawer
+    const drawer = document.getElementById('catalog-drawer');
+    drawer.classList.add('open');
+    document.querySelector('.catalog-header').style.display = 'none';
+    document.querySelector('.app-header').style.display = 'flex';
+    content.style.overflow = 'hidden';
+    drawer.style.height = '90%';
+    drawer.style.borderRadius = '25px 25px 0 0';
+    document.getElementById('swipe-trigger').style.display = 'none';
+    return;
+  }
+
+  // Already logged in → open cart directly
+  openCartAfterLogin();
+}
+
+
+function openCartAfterLogin() {
+
+  const content = document.querySelector('.catalog-content');
+
+  // 1. Stop container scrolling (iframe handles it)
+  content.style.overflow = 'hidden';
+
+  // 2. Hide only the internal "Menu" header
+  document.querySelector('.catalog-header').style.display = 'none';
+
+  // 3. Keep Main App Header visible (since we are only 90%)
+  document.querySelector('.app-header').style.display = 'flex';
+
+  // 4. Ensure Drawer is 90% with rounded corners
+  const drawer = document.getElementById('catalog-drawer');
+  drawer.style.height = '90%';
+  drawer.style.borderRadius = '25px 25px 0 0';
+
+  // 5. Load Cart inside iframe
+  content.innerHTML = `
+    <iframe 
+      src="cart.html" 
+      style="width:100%; height:100%; border:none; display:block; border-radius: 25px 25px 0 0;">
+    </iframe>
+  `;
+
+  drawer.classList.add('open');
+}
+
 
     // 4. Open Product Page (90% Drawer)
     

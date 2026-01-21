@@ -1,4 +1,13 @@
-
+// Expose a function to show the login modal from parent
+window.showLoginModal = function() {
+  const modal = document.getElementById('login-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.style.zIndex = 99999;
+    modal.focus && modal.focus();
+  }
+  window.showLoginSection && window.showLoginSection();
+};
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,7 +17,19 @@
   <title>Cart</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <!-- Restore AUTH_TOKEN from localStorage before any other script -->
+  <script>
+    if (!window.AUTH_TOKEN) {
+      const token = localStorage.getItem('AUTH_TOKEN');
+      if (token) {
+        window.AUTH_TOKEN = token;
+        console.log('[restore] AUTH_TOKEN from localStorage:', token);
+      }
+    }
+  </script>
   <script src="store-service.js"></script>
+  <!-- Place this before any script that uses window.FirebaseAuth or requireLogin -->
+  <script type="module" src="firebase-login.js"></script>
 
   <style>
     :root {
@@ -328,6 +349,15 @@
   </div>
 
   <script>
+      // Restore AUTH_TOKEN from localStorage at the very top
+      if (!window.AUTH_TOKEN) {
+        const token = localStorage.getItem('AUTH_TOKEN');
+        if (token) {
+          window.AUTH_TOKEN = token;
+          console.log('[restore] AUTH_TOKEN from localStorage:', token);
+        }
+      }
+
     // 1. INITIALIZE CART USING STORE SERVICE
     // This ensures we get the cart specific to the current store
     let cart = {};
@@ -489,6 +519,14 @@ async function handleVerifyOTP() {
       })
         .then(async resp => {
           const data = await resp.json().catch(() => ({}));
+          // Set AUTH_TOKEN to access_token if present
+          if (data && data.access_token) {
+            window.AUTH_TOKEN = data.access_token;
+            localStorage.setItem('AUTH_TOKEN', data.access_token);
+            console.log('AUTH_TOKEN set:', window.AUTH_TOKEN);
+          } else {
+            console.log('No access_token in response:', data);
+          }
           console.log('Phone login response:', data);
           window.location.href = "shipping.html";
         })
@@ -759,6 +797,11 @@ function loginUser() {
         // Set AUTH_TOKEN to access_token if present
         if (data && data.access_token) {
           window.AUTH_TOKEN = data.access_token;
+          localStorage.setItem('AUTH_TOKEN', data.access_token);
+          console.log('AUTH_TOKEN set:', window.AUTH_TOKEN);
+          checkFollowStatusInParent();
+        } else {
+          console.log('No access_token in response:', data);
         }
         msg.textContent = "Login successful!";
         setTimeout(() => {
@@ -773,6 +816,61 @@ function loginUser() {
       msg.textContent = "Login failed. Please try again.";
     });
 }
+
+// Helper to check follow status in parent index.html after login
+function checkFollowStatusInParent() {
+  try {
+    if (window.parent && window.parent.checkFollowStatus) {
+      window.parent.checkFollowStatus();
+    }
+  } catch (e) {
+    console.log('Could not call parent checkFollowStatus:', e);
+  }
+}
+
+// Add a checkout handler so the button works
+window.checkoutHandler = async function (event) {
+
+  // 🔐 Always get fresh token (or null)
+  const token = await window.getAuthToken();
+
+  if (!token) {
+    console.log("🔒 Checkout blocked → login required");
+
+    // Show login modal
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.style.zIndex = 99999;
+      modal.focus && modal.focus();
+    }
+
+    return;
+  }
+
+  // ✅ Logged in → proceed to shipping
+  console.log("🚀 Checkout allowed, going to shipping");
+  window.location.href = "shipping.html";
+};
+
+
+// Helper to always get the latest token
+function getAuthToken() {
+  // Always restore from localStorage if window.AUTH_TOKEN is missing
+  if (!window.AUTH_TOKEN) {
+    const token = localStorage.getItem("AUTH_TOKEN");
+    if (token) {
+      window.AUTH_TOKEN = token;
+      console.log('[getAuthToken] Restored AUTH_TOKEN from localStorage:', token);
+    }
+  }
+  const token = window.AUTH_TOKEN || localStorage.getItem("AUTH_TOKEN");
+  console.log("[getAuthToken] window.AUTH_TOKEN:", window.AUTH_TOKEN, "localStorage:", localStorage.getItem("AUTH_TOKEN"));
+  return token;
+}
+
+// On page load, restore AUTH_TOKEN from localStorage if present
+// ...restoration now handled at the top and in getAuthToken...
   </script>
 
 </body>
