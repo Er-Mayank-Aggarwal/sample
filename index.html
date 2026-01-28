@@ -482,6 +482,24 @@ async function handleVerifyOTP() {
         AuthToken.set(data.access_token);
       }
       msg.textContent = "Success! Redirecting...";
+      const shouldAutoFollow = localStorage.getItem('PENDING_FOLLOW');
+      if (shouldAutoFollow === 'true') {
+      localStorage.removeItem('PENDING_FOLLOW');
+      
+      // Call the follow API immediately
+      try {
+        await fetch(`${window.BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${data.access_token}`
+          },
+          body: JSON.stringify({ store_id: parseInt(CACHED_STORE_ID) })
+        });
+      } catch (e) {
+        console.error("Auto-follow failed", e);
+      }
+    }
       window.location.href = "index.html";
     } else {
       msg.textContent = data.detail || data.message || "Authentication failed.";
@@ -703,6 +721,7 @@ function resendOTP() {
         const url = `${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow`;
         const token = AuthToken.get();
         if (!token) {
+          localStorage.setItem('PENDING_FOLLOW', 'true');
           document.getElementById('login-modal').style.display = 'flex';
           return;
         }
