@@ -332,6 +332,8 @@
     <script type="module" src="firebase-login.js"></script>
   </div>
 
+  <script src="phone-helper.js"></script>
+
   <script>
 
 // Clear Cart Button Handler
@@ -584,20 +586,7 @@ function submitNewRegistration() {
 
 /* ================= PHONE HELPER ================= */
 
-function setFirebasePhoneInput(code, phone) {
-  let phoneInput = document.getElementById('phone-number');
-  if (!phoneInput) {
-    phoneInput = document.createElement('input');
-    phoneInput.type = 'hidden';
-    phoneInput.id = 'phone-number';
-    document.body.appendChild(phoneInput);
-  }
 
-  phoneInput.value = code + phone;
-}
-
-// Expose globally for firebase-login.js
-window.setFirebasePhoneInput = setFirebasePhoneInput;
 
 
     document.addEventListener('DOMContentLoaded', async () => {

@@ -11,11 +11,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script type="module" src="store-service.js"></script>
-    <script type="module">
-      import AuthToken from './auth-token.js';
-      window.AuthToken = AuthToken;
-    </script>
+  <script type="module" src="store-service.js"></script>
+  <script type="module">
+    import AuthToken from './auth-token.js';
+    window.AuthToken = AuthToken;
+  </script>
+  <script type="module" src="firebase-login.js"></script>
+  <script src="phone-helper.js"></script>
   <style>
     :root {
       --listerr-blue: #4280FD;
@@ -318,6 +320,36 @@
       padding: 0;
       -webkit-overflow-scrolling: touch;
     }
+
+    /* Overlay & Login Modal Styles */
+    .login-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45);
+      display: none; align-items: center; justify-content: center;
+      z-index: 9999; backdrop-filter: blur(2px);
+    }
+    .login-card {
+      background: #fff; width: 100%; max-width: 360px; border-radius: 18px;
+      padding: 28px 22px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+      animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; align-items: center;
+    }
+    .login-title { margin: 0; color: #4280FD; font-size: 22px; font-weight: 800; }
+    .login-subtitle { margin: 6px 0 20px; font-size: 13px; color: #777; text-align: center; }
+    .phone-input {
+      display: flex; align-items: center; width: 100%; height: 52px;
+      background: #eef5ff; border-radius: 14px; padding: 0 14px; box-sizing: border-box;
+    }
+    .country-code { font-size: 16px; font-weight: 600; color: #555; margin-right: 8px; }
+    .primary-btn {
+      width: 100%; padding: 12px; background: #4280FD; color: #fff;
+      border: none; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 8px;
+    }
+    .otp-section { display: none; width: 100%; margin-top: 14px; }
+    .otp-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 10px; }
+    .otp-message { min-height: 18px; margin-top: 8px; font-size: 13px; color: #e53935; }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .input-box { width: 100%; height: 52px; padding: 0 16px; border-radius: 14px; border: none; background: #eef5ff; font-size: 16px; outline: none; box-sizing: border-box; margin-bottom: 10px; }
+    .phone-input input { border: none; background: transparent; padding: 12px; flex: 1; font-size: 16px; outline: none; height: 100%; }
+    .recaptcha-box { height: 1px; overflow: hidden; margin-top: 10px; }
   </style>
 </head>
 
@@ -334,8 +366,247 @@
         <button class="header-follow-btn" id="follow-btn" onclick="toggleFollow(this)">Follow</button>
       </div>
     </div>
+    <div id="login-modal" class="login-overlay" onclick="hideLoginModal(event)">
+      <div class="login-card minimal" onclick="event.stopPropagation()">
+        <div class="login-logo">
+          <img src="Listerr_logo.png" alt="Logo" class="logo-icon" style="width: 70px; height:70px; object-fit:contain;">
+        </div>
+        <h2 class="welcome-title">Welcome</h2>
+        <p class="welcome-subtitle">Login to your account</p>
 
+        <div id="login-section">
+          <input id="login-name" type="text" class="input-box" placeholder="Your name" />
+          <div class="phone-input">
+            <select id="login-country-code" class="country-code" style="height: 40px; width: 110px; border: none; background: transparent; font-size: 16px; outline: none;">
+              <option value="+91" selected>🇮🇳 +91</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+61">🇦🇺 +61</option>
+              <option value="+81">🇯🇵 +81</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+971">🇦🇪 +971</option>
+              <option value="+92">🇵🇰 +92</option>
+              <option value="+880">🇧🇩 +880</option>
+              <option value="+86">🇨🇳 +86</option>
+              <option value="+7">🇷🇺 +7</option>
+              <option value="+33">🇫🇷 +33</option>
+              <option value="+39">🇮🇹 +39</option>
+              <option value="+34">🇪🇸 +34</option>
+              <option value="+62">🇮🇩 +62</option>
+            </select>
+            <input id="login-phone" type="tel" placeholder="Phone number" maxlength="15" style="min-width: 0;" />
+          </div>
+          <button class="primary-btn" onclick="sendOTP()">SEND OTP</button>
+          <div id="login-message" class="otp-message"></div>
+        </div>
+
+
+
+        <div id="otp-section" class="otp-section" style="display:none; width:100%;">
+          <input id="otp-code" type="text" class="input-box" placeholder="Enter 6-digit OTP" />
+          <button class="primary-btn" onclick="handleVerifyOTP()">VERIFY OTP</button>
+          <button id="resend-otp-btn" class="primary-btn" style="background:#eee;color:#4280FD;margin-top:8px;" onclick="resendOTP()" disabled>Resend OTP <span id="resend-timer">30</span>s</button>
+          <div id="otp-message" class="otp-message"></div>
+          <div id="recaptcha-container" class="recaptcha-box"></div>
+        </div>
+      </div>
+    </div>
+  <script type="module" src="firebase-login.js"></script>
     <script>
+      function startResendTimer() {
+  let seconds = 30;
+  const timerSpan = document.getElementById('resend-timer');
+  const resendBtn = document.getElementById('resend-otp-btn');
+  
+  const interval = setInterval(() => {
+    seconds--;
+    if (timerSpan) timerSpan.textContent = seconds;
+    
+    if (seconds <= 0) {
+      clearInterval(interval);
+      if (resendBtn) {
+        resendBtn.disabled = false;
+        resendBtn.innerHTML = 'Resend OTP';
+      }
+    }
+  }, 1000);
+}
+async function handleVerifyOTP() {
+  const msg = document.getElementById('otp-message');
+  const otp = document.getElementById('otp-code').value.trim();
+  
+  if (!window.confirmationResult) {
+    msg.textContent = "Please request OTP first.";
+    return;
+  }
+  
+  msg.textContent = "Verifying...";
+  
+  try {
+    // 1. Confirm OTP with Firebase
+    const result = await window.confirmationResult.confirm(otp);
+    const firebase_uid = result.user.uid; // Extract UID from Firebase result
+    
+    const phone = document.getElementById('login-phone')?.value.trim() || '';
+    const code = document.getElementById('login-country-code')?.value || '';
+    const name = document.getElementById('login-name')?.value.trim() || 'Guest User';
+    const fullPhone = code + phone;
+    const baseUrl = window.BASE_URL || '';
+    
+    // 2. Attempt Login
+    let resp = await fetch(baseUrl + '/api/v1/auth/phone-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: fullPhone })
+    });
+
+    // 3. Check for 404 - If user doesn't exist, Register them
+    if (resp.status === 404) {
+      msg.textContent = "Creating account...";
+      resp = await fetch(baseUrl + '/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name,
+          phone: fullPhone,
+          firebase_uid: firebase_uid
+        })
+      });
+    }
+
+    const data = await resp.json().catch(() => ({}));
+
+    // 4. Handle Final Response (from Login or Register)
+    if (resp.ok) {
+      if (data && data.access_token) {
+        AuthToken.set(data.access_token);
+      }
+      msg.textContent = "Success! Redirecting...";
+      window.location.href = "index.html";
+    } else {
+      msg.textContent = data.detail || data.message || "Authentication failed.";
+    }
+  } catch (err) {
+    console.error("OTP Error:", err);
+    msg.textContent = "Invalid OTP or connection error. Try again.";
+  }
+}
+/* ========= ======== RESEND OTP ================= */
+function resendOTP() {
+  const phone = document.getElementById('login-phone').value.trim();
+  const code = document.getElementById('login-country-code').value;
+  setFirebasePhoneInput(code, phone);
+  const btn = document.getElementById('resend-otp-btn');
+  const msg = document.getElementById('otp-message');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "SENDING…";
+  }
+  window.sendOTP(function(success) {
+    if (success) {
+      msg.textContent = "OTP resent successfully!";
+      if (btn) {
+        btn.innerHTML = 'Resend OTP <span id="resend-timer">30</span>s';
+      }
+      startResendTimer();
+    } else {
+      msg.textContent = "Failed to resend OTP. Try again.";
+      if (btn) btn.disabled = false;
+    }
+  });
+}
+      window.sendOTP = function (callback) {
+        const phone = document.getElementById('login-phone').value.trim();
+        const code = document.getElementById('login-country-code').value;
+        const msg = document.getElementById('login-message');
+        const sendBtn = document.querySelector('#login-section .primary-btn');
+
+        if (!phone) {
+          msg.textContent = "Please enter phone number";
+          return;
+        }
+
+        // Show "SENDING..." immediately to fix the perceived delay
+        sendBtn.textContent = "SENDING...";
+        sendBtn.disabled = true;
+
+        // Prepare hidden field for firebase-login.js
+        window.setFirebasePhoneInput(code, phone);
+        async function handleVerifyOTP() {
+          const msg = document.getElementById('otp-message');
+          const otp = document.getElementById('otp-code').value.trim();
+
+          if (!window.confirmationResult) {
+            msg.textContent = "Please request OTP first.";
+            return;
+          }
+
+          msg.textContent = "Verifying...";
+
+          try {
+            // 1. Confirm OTP with Firebase
+            const result = await window.confirmationResult.confirm(otp);
+            const firebase_uid = result.user.uid; // Extract UID from Firebase result
+
+            const phone = document.getElementById('login-phone')?.value.trim() || '';
+            const code = document.getElementById('login-country-code')?.value || '';
+            const name = document.getElementById('login-name')?.value.trim() || 'Guest User';
+            const fullPhone = code + phone;
+            const baseUrl = window.BASE_URL || '';
+
+            // 2. Attempt Login
+            let resp = await fetch(baseUrl + '/api/v1/auth/phone-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phone: fullPhone })
+            });
+
+            // 3. Check for 404 - If user doesn't exist, Register them
+            if (resp.status === 404) {
+              msg.textContent = "Creating account...";
+              resp = await fetch(baseUrl + '/api/v1/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  name: name,
+                  phone: fullPhone,
+                  firebase_uid: firebase_uid
+                })
+              });
+            }
+
+            const data = await resp.json().catch(() => ({}));
+
+            // 4. Handle Final Response (from Login or Register)
+            if (resp.ok) {
+              if (data && data.access_token) {
+                AuthToken.set(data.access_token);
+              }
+              msg.textContent = "Success! Redirecting...";
+              window.location.href = "shipping.html";
+            } else {
+              msg.textContent = data.detail || data.message || "Authentication failed.";
+            }
+          } catch (err) {
+            console.error("OTP Error:", err);
+            msg.textContent = "Invalid OTP or connection error. Try again.";
+          }
+        }
+
+        // Call the Firebase logic (ensure you renamed it in firebase-login.js)
+        window.firebaseSendOTP((success) => {
+          if (success) {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('otp-section').style.display = 'block';
+            startResendTimer();
+          } else {
+            sendBtn.textContent = "SEND OTP";
+            sendBtn.disabled = false;
+            msg.textContent = "Failed to send OTP.";
+          }
+          if (callback) callback(success);
+        });
+      };
       // Cache storeId and BASE_URL globally for instant access
       let CACHED_STORE_ID = null;
       let CACHED_BASE_URL = null;
@@ -354,7 +625,7 @@
           } else {
             try {
               CACHED_BASE_URL = (await import('./store-service.js')).BASE_URL;
-            } catch (e) {}
+            } catch (e) { }
           }
 
           // A. Update Name & Title
@@ -366,7 +637,7 @@
           if (data.logo) {
             logoImg.src = data.logo;
           }
-                  const token = AuthToken.get();
+          const token = AuthToken.get();
           console.log('AUTH_TOKEN in product.html:', token);
           // C. Update Follow Button Status using API (with BASE_URL)
           const followBtn = document.getElementById('follow-btn');
@@ -427,95 +698,98 @@
 
       // Follow button logic with API integration
       async function toggleFollow(btn) {
-  if (!CACHED_STORE_ID || !CACHED_BASE_URL) return;
+        if (!CACHED_STORE_ID || !CACHED_BASE_URL) return;
 
-  const url = `${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow`;
-  const token = AuthToken.get();
-
-  const wasFollowing = btn.classList.contains('following');
-
-  // Helper: revert UI safely
-  function revert() {
-    if (wasFollowing) {
-      btn.classList.add('following');
-      btn.textContent = 'Following';
-    } else {
-      btn.classList.remove('following');
-      btn.textContent = 'Follow';
-    }
-  }
-
-  // Helper: handle 401 not authenticated
-  async function handleAuthError(resp) {
-    if (resp.status === 401) {
-      let data = {};
-      try { data = await resp.json(); } catch {}
-
-      if (data.detail === "Not authenticated") {
-        alert("Please login to follow this store 🚪🔑");
-        // Optional: open your login modal automatically
-        document.getElementById('login-modal').style.display = 'flex';
-        return true; // means handled
-      }
-    }
-    return false;
-  }
-
-  if (wasFollowing) {
-    // Optimistic unfollow
-    btn.classList.remove('following');
-    btn.textContent = 'Follow';
-
-    try {
-      const resp = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
+        const url = `${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow`;
+        const token = AuthToken.get();
+        if (!token) {
+          document.getElementById('login-modal').style.display = 'flex';
+          return;
         }
-      });
+        const wasFollowing = btn.classList.contains('following');
 
-      if (await handleAuthError(resp)) {
-        revert();
-        return;
+        // Helper: revert UI safely
+        function revert() {
+          if (wasFollowing) {
+            btn.classList.add('following');
+            btn.textContent = 'Following';
+          } else {
+            btn.classList.remove('following');
+            btn.textContent = 'Follow';
+          }
+        }
+
+        // Helper: handle 401 not authenticated
+        async function handleAuthError(resp) {
+          if (resp.status === 401) {
+            let data = {};
+            try { data = await resp.json(); } catch { }
+
+            if (data.detail === "Not authenticated") {
+              alert("Please login to follow this store 🚪🔑");
+              // Optional: open your login modal automatically
+              document.getElementById('login-modal').style.display = 'flex';
+              return true; // means handled
+            }
+          }
+          return false;
+        }
+
+        if (wasFollowing) {
+          // Optimistic unfollow
+          btn.classList.remove('following');
+          btn.textContent = 'Follow';
+
+          try {
+            const resp = await fetch(url, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': token ? `Bearer ${token}` : ''
+              }
+            });
+
+            if (await handleAuthError(resp)) {
+              revert();
+              return;
+            }
+
+            if (resp.status !== 200) {
+              revert();
+            }
+
+          } catch (e) {
+            revert();
+          }
+
+        } else {
+          // Optimistic follow
+          btn.classList.add('following');
+          btn.textContent = 'Following';
+
+          try {
+            const resp = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
+              },
+              body: JSON.stringify({ store_id: parseInt(CACHED_STORE_ID) })
+            });
+
+            if (await handleAuthError(resp)) {
+              revert();
+              return;
+            }
+
+            if (resp.status !== 201) {
+              revert();
+            }
+
+          } catch (e) {
+            revert();
+          }
+        }
       }
-
-      if (resp.status !== 200) {
-        revert();
-      }
-
-    } catch (e) {
-      revert();
-    }
-
-  } else {
-    // Optimistic follow
-    btn.classList.add('following');
-    btn.textContent = 'Following';
-
-    try {
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify({ store_id: parseInt(CACHED_STORE_ID) })
-      });
-
-      if (await handleAuthError(resp)) {
-        revert();
-        return;
-      }
-
-      if (resp.status !== 201) {
-        revert();
-      }
-
-    } catch (e) {
-      revert();
-    }
-  }
-}
 
     </script>
 
@@ -564,42 +838,42 @@
     let isProductView = false;
 
     // 1. Open Menu (Catalog)
-// REPLACE your existing openCatalog function with this:
+    // REPLACE your existing openCatalog function with this:
 
-function openCatalog() {
-  isProductView = false;
-  const content = document.querySelector('.catalog-content');
-  const drawer = document.getElementById('catalog-drawer');
-  
-  // Show Headers
-  document.querySelector('.app-header').style.display = 'flex';
-  document.querySelector('.catalog-header').style.display = 'flex';
+    function openCatalog() {
+      isProductView = false;
+      const content = document.querySelector('.catalog-content');
+      const drawer = document.getElementById('catalog-drawer');
 
-  // Reset Drawer Style
-  drawer.style.height = '90%';
-  drawer.style.borderRadius = '25px 25px 0 0';
+      // Show Headers
+      document.querySelector('.app-header').style.display = 'flex';
+      document.querySelector('.catalog-header').style.display = 'flex';
 
-  // FIX: Check if iframe already exists. If not, create it.
-  let iframe = content.querySelector('iframe');
-  if (!iframe) {
-     iframe = document.createElement('iframe');
-     iframe.src = "Catalog.html";
-     iframe.style.width = "100%";
-     iframe.style.height = "100%";
-     iframe.style.border = "none";
-     content.appendChild(iframe);
-  } else {
-     // If it exists, ensure we are on the Catalog page (not cart/product)
-     try {
-       if (iframe.contentWindow.location.href.indexOf('Catalog.html') === -1) {
-          iframe.contentWindow.location.replace('Catalog.html'); 
-       }
-     } catch(e) { iframe.src = "Catalog.html"; }
-  }
+      // Reset Drawer Style
+      drawer.style.height = '90%';
+      drawer.style.borderRadius = '25px 25px 0 0';
 
-  drawer.classList.add('open');
-  document.getElementById('swipe-trigger').style.display = 'none';
-}
+      // FIX: Check if iframe already exists. If not, create it.
+      let iframe = content.querySelector('iframe');
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.src = "Catalog.html";
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.style.border = "none";
+        content.appendChild(iframe);
+      } else {
+        // If it exists, ensure we are on the Catalog page (not cart/product)
+        try {
+          if (iframe.contentWindow.location.href.indexOf('Catalog.html') === -1) {
+            iframe.contentWindow.location.replace('Catalog.html');
+          }
+        } catch (e) { iframe.src = "Catalog.html"; }
+      }
+
+      drawer.classList.add('open');
+      document.getElementById('swipe-trigger').style.display = 'none';
+    }
 
     // 2. Close Logic (The "Smart" Back Button)
     function closeCatalog() {
@@ -643,7 +917,7 @@ function openCatalog() {
     }
 
     // 4. Open Product Page (90% Drawer)
-    
+
 
     // 5. Helper function for product.html internal back button
     function closeProduct() {
@@ -657,19 +931,19 @@ function openCatalog() {
 
     window.isProductView = false; // default
 
-function handleBack() {
-  const iframe = document.querySelector("#catalog-drawer iframe");
+    function handleBack() {
+      const iframe = document.querySelector("#catalog-drawer iframe");
 
-  // 🧠 If product page is open, go back to menu only
-  if (window.isProductView && iframe) {
-    iframe.src = "Catalog.html";   // back to menu
-    window.isProductView = false;  // reset state
-    return;
-  }
+      // 🧠 If product page is open, go back to menu only
+      if (window.isProductView && iframe) {
+        iframe.src = "Catalog.html";   // back to menu
+        window.isProductView = false;  // reset state
+        return;
+      }
 
-  // 🚪 Otherwise, close the whole catalog drawer
-  closeCatalog();
-}
+      // 🚪 Otherwise, close the whole catalog drawer
+      closeCatalog();
+    }
 
   </script>
 
