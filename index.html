@@ -427,60 +427,96 @@
 
       // Follow button logic with API integration
       async function toggleFollow(btn) {
-        // Get store id from StoreService.getStoreData()
-        if (!CACHED_STORE_ID || !CACHED_BASE_URL) return;
+  if (!CACHED_STORE_ID || !CACHED_BASE_URL) return;
 
-        const url = `${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow`;
-        // Get auth token
-        const token = AuthToken.get();
-        // Optimistic UI update
-        const wasFollowing = btn.classList.contains('following');
-        if (wasFollowing) {
-          btn.classList.remove('following');
-          btn.textContent = 'Follow';
-          // Unfollow: send request, expect 200 for success
-          try {
-            const resp = await fetch(url, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': token ? `Bearer ${token}` : ''
-              }
-            });
-            if (resp.status !== 200) {
-              // Revert if failed
-              btn.classList.add('following');
-              btn.textContent = 'Following';
-            }
-          } catch (e) {
-            // Revert if error
-            btn.classList.add('following');
-            btn.textContent = 'Following';
-          }
-        } else {
-          btn.classList.add('following');
-          btn.textContent = 'Following';
-          // Follow: send request, expect 201 for success, 422 for error
-          try {
-            const resp = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
-              },
-              body: JSON.stringify({ store_id: parseInt(CACHED_STORE_ID) })
-            });
-            if (resp.status !== 201) {
-              // Revert if failed
-              btn.classList.remove('following');
-              btn.textContent = 'Follow';
-            }
-          } catch (e) {
-            // Revert if error
-            btn.classList.remove('following');
-            btn.textContent = 'Follow';
-          }
-        }
+  const url = `${CACHED_BASE_URL}/api/v1/stores/${CACHED_STORE_ID}/follow`;
+  const token = AuthToken.get();
+
+  const wasFollowing = btn.classList.contains('following');
+
+  // Helper: revert UI safely
+  function revert() {
+    if (wasFollowing) {
+      btn.classList.add('following');
+      btn.textContent = 'Following';
+    } else {
+      btn.classList.remove('following');
+      btn.textContent = 'Follow';
+    }
+  }
+
+  // Helper: handle 401 not authenticated
+  async function handleAuthError(resp) {
+    if (resp.status === 401) {
+      let data = {};
+      try { data = await resp.json(); } catch {}
+
+      if (data.detail === "Not authenticated") {
+        alert("Please login to follow this store 🚪🔑");
+        // Optional: open your login modal automatically
+        document.getElementById('login-modal').style.display = 'flex';
+        return true; // means handled
       }
+    }
+    return false;
+  }
+
+  if (wasFollowing) {
+    // Optimistic unfollow
+    btn.classList.remove('following');
+    btn.textContent = 'Follow';
+
+    try {
+      const resp = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+
+      if (await handleAuthError(resp)) {
+        revert();
+        return;
+      }
+
+      if (resp.status !== 200) {
+        revert();
+      }
+
+    } catch (e) {
+      revert();
+    }
+
+  } else {
+    // Optimistic follow
+    btn.classList.add('following');
+    btn.textContent = 'Following';
+
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({ store_id: parseInt(CACHED_STORE_ID) })
+      });
+
+      if (await handleAuthError(resp)) {
+        revert();
+        return;
+      }
+
+      if (resp.status !== 201) {
+        revert();
+      }
+
+    } catch (e) {
+      revert();
+    }
+  }
+}
+
     </script>
 
     <div class="swipe-cta-container" id="swipe-trigger" onclick="openCatalog()">
@@ -528,24 +564,42 @@
     let isProductView = false;
 
     // 1. Open Menu (Catalog)
-    function openCatalog() {
-      isProductView = false; // We are in the Menu list now
+// REPLACE your existing openCatalog function with this:
 
-      const content = document.querySelector('.catalog-content');
+function openCatalog() {
+  isProductView = false;
+  const content = document.querySelector('.catalog-content');
+  const drawer = document.getElementById('catalog-drawer');
+  
+  // Show Headers
+  document.querySelector('.app-header').style.display = 'flex';
+  document.querySelector('.catalog-header').style.display = 'flex';
 
-      // Show Headers
-      document.querySelector('.app-header').style.display = 'flex';
-      document.querySelector('.catalog-header').style.display = 'flex';
+  // Reset Drawer Style
+  drawer.style.height = '90%';
+  drawer.style.borderRadius = '25px 25px 0 0';
 
-      // Reset Drawer to 90%
-      const drawer = document.getElementById('catalog-drawer');
-      drawer.style.height = '90%';
-      drawer.style.borderRadius = '25px 25px 0 0';
+  // FIX: Check if iframe already exists. If not, create it.
+  let iframe = content.querySelector('iframe');
+  if (!iframe) {
+     iframe = document.createElement('iframe');
+     iframe.src = "Catalog.html";
+     iframe.style.width = "100%";
+     iframe.style.height = "100%";
+     iframe.style.border = "none";
+     content.appendChild(iframe);
+  } else {
+     // If it exists, ensure we are on the Catalog page (not cart/product)
+     try {
+       if (iframe.contentWindow.location.href.indexOf('Catalog.html') === -1) {
+          iframe.contentWindow.location.replace('Catalog.html'); 
+       }
+     } catch(e) { iframe.src = "Catalog.html"; }
+  }
 
-      content.innerHTML = '<iframe src="Catalog.html" style="width:100%; height:100%; border:none;"></iframe>';
-      drawer.classList.add('open');
-      document.getElementById('swipe-trigger').style.display = 'none';
-    }
+  drawer.classList.add('open');
+  document.getElementById('swipe-trigger').style.display = 'none';
+}
 
     // 2. Close Logic (The "Smart" Back Button)
     function closeCatalog() {

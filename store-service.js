@@ -98,7 +98,8 @@ const StoreService = {
       id: cat.id,
       name: cat.name,
       products: (cat.products || []).map(p => ({
-        id: p.id || null,
+id: p.id || p.product_id|| null,
+
         name: p.name,
         price: p.price,
         mrp: p.mrp,

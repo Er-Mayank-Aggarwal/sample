@@ -201,6 +201,8 @@
     </style>
 </head>
 <body>
+<script type="module">
+</script>
 
     <div class="image-section">
         <div class="side-badge">
@@ -267,8 +269,36 @@
 
     <script type="module" src="store-service.js"></script>
 
+
 <script>
   let product = null;
+async function syncProductCartFromServer() {
+  const token = AuthToken.get();
+  if (!token) return;
+
+  try {
+    const resp = await fetch(window.BASE_URL + '/api/v1/cart', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!resp.ok) return;
+
+    const data = await resp.json();
+
+    const localCart = {};
+    data.items.forEach(item => {
+      localCart[item.name] = {
+        id: item.product_id,
+        price: item.price,
+        qty: item.quantity,
+        img: item.image
+      };
+    });
+
+    window.StoreService.saveCart(localCart);
+
+  } catch {}
+}
 
   document.addEventListener('DOMContentLoaded', function () {
 
@@ -301,7 +331,7 @@ if (product.store_id) {
     /* ---------- BASIC FIELDS ---------- */
     document.getElementById('p-name').textContent = product.name;
     document.getElementById('p-price').textContent = `₹${product.price}`;
-
+    window.CURRENT_PRODUCT_ID = product.id;   // ⭐ THIS LINE IS CRITICAL
     const mrpEl = document.getElementById('p-mrp');
     if (mrpEl) {
       mrpEl.textContent = product.mrp ? `₹${product.mrp}` : '';
@@ -365,9 +395,12 @@ if (infoRows[3]) {
 }
 
 
-    // ---------- ADD CONTROL ----------
-    renderAddControl();
-updateCartBadge();
+(async function() {
+  await syncProductCartFromServer();
+  renderAddControl();
+  updateCartBadge();
+})();
+
 
   });
 
@@ -399,55 +432,64 @@ updateCartBadge();
     }
   }
 
-  function updateQty(delta) {
+async function updateQty(delta) {
+  if (!product) return;
 
-    if (!product) return;
-    if (!window.StoreService) return;
+const localCart = window.StoreService.getCart();
+const currentQty = localCart[product.name]?.qty || 0;
 
-    let cart = window.StoreService.getCart();
+  const newQty = currentQty + delta;
 
-    if (!cart[product.name]) {
-      cart[product.name] = {
-        price: product.price,
-        qty: 0,
-        img: product.image
-      };
+  try {
+    if (newQty <= 0) {
+      await removeItem(product.id);
+    } else {
+      await updateItem(product.id, newQty);
     }
+const localCart = window.StoreService.getCart();
 
-    cart[product.name].qty += delta;
+if (newQty <= 0) {
+  delete localCart[product.name];
+} else {
+  localCart[product.name] = {
+    id: product.id,
+    price: product.price,
+    qty: newQty,
+    img: product.image
+  };
+}
 
-    if (cart[product.name].qty <= 0) {
-      delete cart[product.name];
-    }
-
-    window.StoreService.saveCart(cart);
-    renderAddControl();
+window.StoreService.saveCart(localCart);
+renderAddControl();
 updateCartBadge();
 
+
+  } catch (e) {
+    alert("Cannot update quantity ❌");
+  }
+}
+
+
+async function addToCartFromPage() {
+  const pid = window.CURRENT_PRODUCT_ID;
+
+  if (!pid || pid <= 0) {
+    alert("Invalid product ❌ Cannot add to cart");
+    console.error("❌ Missing product id:", pid);
+    return;
   }
 
-  window.addToCartFromPage = function () {
+  try {
+    await addItem(pid, 1);   // 🔥 USE OFFICIAL API LAYER
+    alert("Added to cart 🛒✅");
+  } catch (e) {
+    console.error("Add to cart failed:", e);
+    alert("Login required or cannot add ❌");
+  }
+}
 
-    if (!product) return;
-    if (!window.StoreService) return;
 
-    let cart = window.StoreService.getCart();
 
-    if (!cart[product.name]) {
-      cart[product.name] = {
-        price: product.price,
-        qty: 1,
-        img: product.image
-      };
-    } else {
-      cart[product.name].qty++;
-    }
-
-    window.StoreService.saveCart(cart);
-    renderAddControl();
-updateCartBadge();
-
-  };
 
   /* =========================================
      SHARE PRODUCT

@@ -1,3 +1,4 @@
+
 import AuthToken from './auth-token.js';
 // 🔥 FORCE store context for cart isolation
 
@@ -51,8 +52,10 @@ document.addEventListener('DOMContentLoaded', async function () {
       const currentQty = cart[prod.name] ? cart[prod.name].qty : 0;
       const imgSrc = prod.image ? prod.image : 'fallback.jpeg';
 
-      const card = document.createElement('div');
+const card = document.createElement('div');
 card.className = 'product-card';
+card.dataset.productId = prod.id;   // 🔥 ADD THIS
+
 
 // 🔥 Attach real category to card
 card.dataset.category = category.name;
@@ -109,11 +112,14 @@ card.dataset.category = category.name;
   }
 
   // Global Click Listener for Cart Buttons
-  document.addEventListener('click', function (e) {
-    
-    if (!e.target.matches('.add-btn, .plus, .minus')) return;
-
+  // script.js - Updated Global Click Listener
+document.addEventListener('click', async function (e) {
     const card = e.target.closest('.product-card');
+    
+    // FIX: Safety check to prevent "Cannot read properties of null (reading 'dataset')"
+    if (!card) return; 
+
+    const productId = card.dataset.productId;
     const name = card.querySelector('.product-name').textContent;
     const priceRaw = card.querySelector('.current-price').textContent;
     const price = parseFloat(priceRaw.replace(/[^\d.]/g, ''));
@@ -122,34 +128,40 @@ card.dataset.category = category.name;
     
     let cart = window.StoreService.getCart();
 
-    // --- ADD CLICK ---
+    // --- ADD BUTTON ---
     if (e.target.classList.contains('add-btn')) {
-      cart[name] = { price, qty: 1, img };
-      e.target.outerHTML = getButtonHtml(1);
+        // Local Update Only
+        cart[name] = { id: productId, price, qty: 1, img };
+        window.StoreService.saveCart(cart);
+        e.target.outerHTML = getButtonHtml(1);
+        updateParentBadge();
     }
-
-    // --- PLUS CLICK ---
+    
+    // --- PLUS BUTTON ---
     else if (e.target.classList.contains('plus')) {
-      cart[name].qty++;
-      e.target.parentElement.querySelector('.qty-value').textContent = cart[name].qty;
+        cart[name].qty++;
+        const qtyDisplay = e.target.parentElement.querySelector('.qty-value');
+        if (qtyDisplay) qtyDisplay.textContent = cart[name].qty;
+        window.StoreService.saveCart(cart);
+        updateParentBadge();
     }
 
-    // --- MINUS CLICK ---
+    // --- MINUS BUTTON ---
     else if (e.target.classList.contains('minus')) {
-      cart[name].qty--;
-      if (cart[name].qty <= 0) {
-        delete cart[name];
-        const controlDiv = e.target.closest('.qty-control');
-        controlDiv.outerHTML = `<button class="add-btn">ADD</button>`;
-      } else {
-        e.target.parentElement.querySelector('.qty-value').textContent = cart[name].qty;
-      }
+        const newQty = cart[name].qty - 1;
+        if (newQty <= 0) {
+          delete cart[name];
+          const container = e.target.closest('.product-pricing');
+          if (container) container.innerHTML = `<button class="add-btn">ADD</button>`;
+        } else {
+          cart[name].qty = newQty;
+          const qtyDisplay = e.target.parentElement.querySelector('.qty-value');
+          if (qtyDisplay) qtyDisplay.textContent = newQty;
+        }
+        window.StoreService.saveCart(cart);
+        updateParentBadge();
     }
-
-    window.StoreService.saveCart(cart);
-    updateParentBadge();
-  });
-
+});
 /* =========================================
    3. PRODUCT CARD NAVIGATION (FINAL)
 ========================================= */
@@ -158,6 +170,12 @@ document.addEventListener('click', function (e) {
 
   const card = e.target.closest('.product-card');
   if (!card) return;
+  const productId = card.dataset.productId;   // 🔥 REQUIRED
+if (!productId) {
+  console.error("❌ Invalid productId from card:", card.dataset.productId, card);
+  alert("Product ID error ❌ Please refresh");
+  return;
+}
 
   // Ignore clicks on cart controls
   if (e.target.matches('.add-btn, .plus, .minus')) return;

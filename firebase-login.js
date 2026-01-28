@@ -106,7 +106,7 @@ window.getAuthToken = async function () {
 
 let recaptchaInitialized = false;
 
-window.sendOTP = async function (callback) {
+window.firebaseSendOTP = async function (callback) {
   const phoneInput = document.getElementById("phone-number");
   const otpMsg = document.getElementById("otp-message");
 
