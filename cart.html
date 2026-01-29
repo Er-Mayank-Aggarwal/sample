@@ -249,6 +249,7 @@
 </head>
 
 <body>
+
   <script type="module">
     import { fetchCart, addItem, updateItem, removeItem, clearCart } from './cart-api.js';
     window.fetchCart = fetchCart;
@@ -256,6 +257,11 @@
     window.updateItem = updateItem;
     window.removeItem = removeItem;
     window.clearCart = clearCart;
+  </script>
+
+  <script>
+    // Ensure cart is always global and up-to-date
+    let cart = {};
   </script>
 
   <img class="cart-bg-art" src="cartoon.png" alt="Background">
@@ -356,6 +362,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show login modal
         document.getElementById('login-modal').style.display = 'flex';
       } else {
+        if (window.StoreService && typeof window.StoreService.saveCart === 'function') {
+          window.StoreService.saveCart(cart);
+        }
         window.location.href = "shipping.html";
       }
     };

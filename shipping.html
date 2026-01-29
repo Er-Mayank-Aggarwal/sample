@@ -766,7 +766,6 @@
 </head>
 
 <body>
-    <!-- HEADER -->
     <div class="shipping-header">
         <button class="back-btn" onclick="history.back()">
             <i class="fas fa-arrow-left"></i>
@@ -774,380 +773,305 @@
         <span class="header-title">Back to cart</span>
     </div>
 
-    <!-- DELIVERY TABS -->
     <div class="delivery-tabs">
-        <button class="delivery-tab active" onclick="switchTab('home')">
-            <i class="fas fa-truck"></i>
-            HOME DELIVERY
+        <button class="delivery-tab active" onclick="switchTab('instore')">
+            <i class="fas fa-store-alt"></i> IN-STORE
         </button>
         <button class="delivery-tab" onclick="switchTab('pickup')">
-            <i class="fas fa-walking"></i>
-            SELF PICKUP
+            <i class="fas fa-walking"></i> SELF PICKUP
+        </button>
+        <button class="delivery-tab" onclick="switchTab('standard')">
+            <i class="fas fa-truck"></i> DELIVERY
         </button>
     </div>
 
-    <!-- ADDRESS SECTION (Home Delivery Only) -->
-    <div class="address-section" id="home-address-section">
+    <div class="section-container" id="instore-section">
+        <div class="section-title">In-Store Billing</div>
+        <p style="font-size: 14px; color: var(--text-light);">Place your order and show your Order ID at the counter. No delivery charges apply.</p>
+    </div>
+
+    <div class="section-container" id="self-pickup-section" style="display: none;">
+        <div class="section-title">Store Pickup Location</div>
         <div class="current-address">
             <i class="fas fa-map-marker-alt"></i>
-            <span class="address-text" id="selected-address">A2-13 Sapana Berrier, Phulera, 303338</span>
+            <div class="address-text">
+                <strong id="pickup-store-name">Store Name</strong><br>
+                <span id="pickup-store-address">Loading store address...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="address-section" id="standard-delivery-section" style="display: none;">
+        <div class="section-title">Delivery Address</div>
+        <div class="current-address">
+            <i class="fas fa-map-marker-alt"></i>
+            <span class="address-text" id="selected-address">No address selected</span>
         </div>
         <button class="change-address" onclick="openAddressModal()">
-            Change address <i class="fas fa-pencil-alt"></i>
+            <i class="fas fa-plus-circle"></i> Add or Change Address
         </button>
-        <button class="change-address" onclick="openMapModal()">
-            Choose on map <i class="fas fa-map-marked-alt"></i>
-        </button>
-        <div class="map-label"><i class="fas fa-map"></i> Delivery Location</div>
-        <div class="map-container">
-            <iframe id="home-delivery-map" src="https://www.google.com/maps?q=A2-13+Sapana+Berrier+Phulera+303338&output=embed" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        </div>
-        <div class="free-delivery-badge">
-            <i class="fas fa-gift"></i> Free Delivery on order above INR 499.
-        </div>
     </div>
 
-
-    <!-- SELF PICKUP SECTION (Hidden by default) -->
-    <div class="section-container" id="self-pickup-section" style="display: none;">
-        <div class="section-title">Self Pickup Location</div>
-        <div class="delivery-option" style="border-bottom: none;">
-            <div class="option-icon">
-                <i class="fas fa-store"></i>
-            </div>
-            <div class="option-content">
-                <div class="option-title">Jars n' More Store</div>
-                <div class="option-subtitle" id="store-address">123 Main Street, Phulera - 303338</div>
-            </div>
-        </div>
-        <div class="map-label" style="margin-left: 0; margin-bottom: 8px;"><i class="fas fa-map"></i> Store Location</div>
-        <div class="map-container">
-            <iframe id="self-pickup-map" src="https://www.google.com/maps?q=123+Main+Street+Phulera+303338&output=embed" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        </div>
-        <div class="free-delivery-badge" style="margin-top: 16px;">
-            <i class="fas fa-gift"></i> Free Pickup on all orders!
-        </div>
-    </div>
-
-    <!-- BILL DETAILS -->
     <div class="section-container">
         <div class="section-title">Bill Details</div>
-        
         <div class="bill-row">
-            <span class="bill-label">Item Price</span>
-            <span class="bill-value">₹<span id="item-price">0</span></span>
+            <span>Item Price</span>
+            <span>₹<span id="item-price">0</span></span>
         </div>
-        
-        <div class="bill-row discount">
-            <span class="bill-label">Discount</span>
-            <span class="bill-value">-₹<span id="discount-amount">0</span></span>
+        <div class="bill-row" style="color:var(--success-green)">
+            <span>Discount (4%)</span>
+            <span>-₹<span id="discount-amount">0</span></span>
         </div>
-        
         <div class="bill-row">
-            <span class="bill-label">Item Total</span>
-            <span class="bill-value">₹<span id="item-total">0</span></span>
+            <span>Delivery Amount</span>
+            <span id="delivery-val"><span class="free-text">FREE</span></span>
         </div>
-        
-        <div class="bill-row">
-            <span class="bill-label">Delivery Amount</span>
-            <span class="bill-value" id="delivery-amount-value">
-                <span class="delivery-free">₹50</span>
-                <span class="free-text">FREE</span>
-            </span>
-        </div>
-        
         <div class="bill-row total">
-            <span class="bill-label">To Pay</span>
-            <span class="bill-value">₹<span id="total-pay">0</span></span>
+            <span>To Pay</span>
+            <span>₹<span id="total-pay">0</span></span>
         </div>
     </div>
 
-    <!-- FOOTER -->
     <div class="checkout-footer">
-        <div class="footer-price">
-            <span class="footer-original">₹<span id="footer-original">1300</span></span>
-            <div>
-                <span class="footer-total">₹<span id="footer-total">1249</span></span>
-                <span class="footer-items"><span id="footer-items">4</span> Items</span>
-            </div>
+        <div>
+            <div style="font-size:12px; color:#999; text-decoration:line-through">₹<span id="footer-original">0</span></div>
+            <div style="font-size:20px; font-weight:800">₹<span id="footer-total">0</span></div>
         </div>
         <button class="place-order-btn" onclick="placeOrder()">PLACE ORDER</button>
     </div>
 
-    <!-- ADDRESS MODAL -->
     <div class="modal-overlay" id="address-modal">
         <div class="address-modal">
-            <div class="modal-title">Choose Shipping Address</div>
+            <div class="modal-title" style="margin-bottom:15px; font-size:18px">My Addresses</div>
             
-            <!-- Saved Addresses -->
-            <div class="saved-address" onclick="selectAddress(0, 'A2-13 Sapana Berrier, Phulera, 303338')">
-                <div class="address-radio" id="address-radio-0">
+            <div id="saved-addresses-list"></div>
+
+            <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
+                <div style="font-weight:800; color:var(--primary-blue); margin-bottom:10px; font-size:14px">ADD NEW ADDRESS</div>
+                <div class="form-group">
+                    <label class="form-label">PINCODE</label>
+                    <input type="text" class="form-input" id="pin-input" maxlength="6" oninput="handlePincode(this.value)" placeholder="Enter 6-digit pincode">
                 </div>
-                <div class="saved-address-content">
-                    <div class="saved-address-text">A2-13 Sapana Berrier, Phulera, 303338</div>
-                    <div class="default-badge">Default</div>
+                <div class="form-group">
+                    <label class="form-label">Address Line 1</label>
+                    <input type="text" class="form-input" id="addr1-input" placeholder="House/Flat No, Building">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address Line 2</label>
+                    <input type="text" class="form-input" id="addr2-input" placeholder="Street, Landmark">
+                </div>
+                <div style="display:flex; gap:10px">
+                    <div class="form-group" style="flex:1">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-input" id="city-input" readonly>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label class="form-label">State</label>
+                        <input type="text" class="form-input" id="state-input" readonly>
+                    </div>
                 </div>
             </div>
             
-            <div class="saved-address" onclick="selectAddress(1, 'A2-13 Sapana Berrier, Phulera, 303338')">
-                <div class="address-radio selected" id="address-radio-1">
-                </div>
-                <div class="saved-address-content">
-                    <div class="saved-address-text">A2-13 Sapana Berrier, Phulera, 303338</div>
-                </div>
-                <div class="address-check visible">
-                    <i class="fas fa-check"></i>
-                </div>
-            </div>
-
-            <!-- Add Address Form -->
-            <div class="add-address-section">
-                <div class="add-address-title">ADD ADDRESS</div>
-                
-                <div class="form-group">
-                    <label class="form-label">House Number/Name, Street Name</label>
-                    <input type="text" class="form-input" placeholder="For eg: 89 A, Maharani Farms" id="street-input">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">City</label>
-                    <input type="text" class="form-input" placeholder="For eg: Phulera" id="city-input">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">PIN CODE</label>
-                    <input type="text" class="form-input" placeholder="For eg: 303338" id="pincode-input">
-                </div>
-            </div>
-
-            <!-- Modal Buttons -->
-            <div class="modal-buttons">
-                <button class="cancel-btn" onclick="closeAddressModal()">CANCEL</button>
-                <button class="save-address-btn" onclick="saveNewAddress()">SAVE ADDRESS</button>
+            <div style="display:flex; justify-content:space-between; margin-top:15px">
+                <button onclick="closeAddressModal()" style="border:none; background:none; color:red; font-weight:700">CANCEL</button>
+                <button onclick="submitNewAddress()" style="background:var(--primary-blue); color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:700">SAVE & USE</button>
             </div>
         </div>
     </div>
-
-    <!-- TIME PICKER MODAL -->
-    <div class="modal-overlay" id="time-modal">
-        <div class="time-modal">
-            <div class="modal-title">Select Delivery Time Slot</div>
-            
-            <div class="time-slots-grid">
-                <div class="time-slot-option selected" onclick="selectTimeSlot(this, '11am - 1pm', 'Tomorrow')">
-                    <div class="time">11am - 1pm</div>
-                    <div class="day">Tomorrow</div>
-                </div>
-                <div class="time-slot-option" onclick="selectTimeSlot(this, '2pm - 4pm', 'Tomorrow')">
-                    <div class="time">2pm - 4pm</div>
-                    <div class="day">Tomorrow</div>
-                </div>
-                <div class="time-slot-option" onclick="selectTimeSlot(this, '4pm - 6pm', 'Tomorrow')">
-                    <div class="time">4pm - 6pm</div>
-                    <div class="day">Tomorrow</div>
-                </div>
-                <div class="time-slot-option" onclick="selectTimeSlot(this, '6pm - 8pm', 'Tomorrow')">
-                    <div class="time">6pm - 8pm</div>
-                    <div class="day">Tomorrow</div>
-                </div>
-                <div class="time-slot-option" onclick="selectTimeSlot(this, '9am - 11am', 'Day After')">
-                    <div class="time">9am - 11am</div>
-                    <div class="day">Day After</div>
-                </div>
-                <div class="time-slot-option" onclick="selectTimeSlot(this, '11am - 1pm', 'Day After')">
-                    <div class="time">11am - 1pm</div>
-                    <div class="day">Day After</div>
-                </div>
-            </div>
-
-            <button class="confirm-time-btn" onclick="confirmTimeSlot()">CONFIRM TIME SLOT</button>
-        </div>
-    </div>
-
-    <!-- MAP PICKER MODAL -->
-    <div class="modal-overlay" id="map-modal">
-        <div class="address-modal">
-            <div class="modal-title">Pick location on map</div>
-
-            <div id="leaflet-map" style="height: 280px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e0e0e0; z-index: 1;"></div>
-
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <button onclick="getCurrentLocation()" style="background: var(--primary-blue); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                    <i class="fas fa-crosshairs"></i> Use Current Location
-                </button>
-                <span style="font-size: 12px; color: #5F6368;">or tap on map</span>
-            </div>
-
-            <p style="font-size:13px;color:#5F6368;margin-bottom:12px;">
-                <i class="fas fa-info-circle" style="color: var(--primary-blue);"></i> Tap anywhere on the map to select delivery location
-            </p>
-
-            <div class="form-group">
-                <label class="form-label">Selected Address</label>
-                <input
-                    type="text"
-                    class="form-input"
-                    id="map-address-input"
-                    placeholder="Tap on map to auto-pick address"
-                    readonly
-                    style="background: #f9f9f9;"
-                />
-                <div id="map-loading" style="display: none; font-size: 12px; color: var(--primary-blue); margin-top: 6px;">
-                    <i class="fas fa-spinner fa-spin"></i> Getting address...
-                </div>
-            </div>
-
-            <div class="modal-buttons">
-                <button class="cancel-btn" onclick="closeMapModal()">CANCEL</button>
-                <button class="save-address-btn" onclick="saveMapAddress()">USE THIS LOCATION</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ORDER SUCCESS MODAL -->
-    <div class="order-success-overlay" id="order-success-modal">
-        <div class="success-confetti">
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="confetti-piece"></div>
-            <div class="success-icon">
-                <i class="fas fa-check"></i>
-            </div>
-        </div>
-        <div class="success-title">Congratulations<br>Your order<br>has been accepted</div>
-        <div class="success-subtitle">You may now proceed to pay online (or pay on delivery).</div>
-        <button class="back-to-menu-btn" onclick="window.parent.closeCart()">BACK TO MENU</button>
-    </div>
-
+  
     <!-- Leaflet JS for interactive map -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-       /* ============================================================
-   SHIPPING & DELIVERY LOGIC (UPDATED)
+ /* ============================================================
+   SHIPPING & DELIVERY LOGIC (FIXED)
    ============================================================ */
 
-let currentTab = 'home'; // Default view
-let leafletMap = null;
-let mapMarker = null;
-let selectedLatLng = null;
-let selectedAddressIndex = 1;
-let selectedTimeSlot = { time: '11am - 1pm', day: 'Tomorrow' };
-
-// 🔥 ENSURE STORE SERVICE IS READY BEFORE LOADING DATA
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("Shipping page initializing...");
-    
-    // Small delay to ensure the module-based StoreService is fully registered on window
-    setTimeout(async () => {
-        if (window.StoreService) {
-            await loadCartData();
-        } else {
-            console.error("StoreService not found. Prices will remain 0.");
+let userAddresses = [];
+let selectedAddrId = null;
+let currentTab = 'instore'; 
+// --- 1. PINCODE AUTO-FILL ---
+async function handlePincode(pin) {
+    if (pin.length === 6) {
+        try {
+            const resp = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+            const data = await resp.json();
+            if (data[0].Status === "Success") {
+                const post = data[0].PostOffice[0];
+                document.getElementById('city-input').value = post.District;
+                document.getElementById('state-input').value = post.State;
+            }
+        } catch (e) { 
+            console.error("Pincode lookup error", e); 
         }
-    }, 100);
+    }
+}
+
+// --- 2. GET USER ADDRESSES ---
+async function fetchUserAddresses() {
+    const token = window.AuthToken.get();
+    if (!token) return;
+
+    try {
+        const resp = await fetch(`${window.BASE_URL}/api/v1/addresses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (resp.ok) {
+            userAddresses = await resp.json();
+            renderAddressList();
+        }
+    } catch (e) { 
+        console.error("Fetch address error", e); 
+    }
+}
+
+// --- 3. RENDER ADDRESSES ---
+function renderAddressList() {
+    const list = document.getElementById('saved-addresses-list');
+    if(!list) return;
+    list.innerHTML = userAddresses.map(addr => `
+        <div class="saved-address" onclick="selectExistingAddress(${addr.id}, '${addr.address_line1}, ${addr.city}')">
+            <div class="address-radio ${selectedAddrId === addr.id ? 'selected' : ''}"></div>
+            <div class="saved-address-content">
+                <div class="saved-address-text">
+                    ${addr.address_line1}, ${addr.city} - ${addr.pincode}
+                </div>
+            </div>
+            <i class="fas fa-trash-alt" style="color:#F44336; padding: 10px; cursor: pointer;" 
+               onclick="event.stopPropagation(); deleteAddress(${addr.id})"></i>
+        </div>
+    `).join('');
+}
+
+function selectExistingAddress(id, fullText) {
+    selectedAddrId = id;
+    document.getElementById('selected-address').textContent = fullText;
+    renderAddressList();
+}
+
+// --- 4. DELETE ADDRESS ---
+async function deleteAddress(id) {
+    if (!confirm("Delete this address?")) return;
+    const token = window.AuthToken.get();
+    try {
+        const resp = await fetch(`${window.BASE_URL}/api/v1/addresses/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (resp.ok) {
+            await fetchUserAddresses();
+            if (selectedAddrId === id) {
+                selectedAddrId = null;
+                document.getElementById('selected-address').textContent = "Select a delivery address";
+            }
+        }
+    } catch (e) { alert("Failed to delete address."); }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Run everything immediately in sequence to avoid race conditions
+    const cart = loadCartData();
+    
+    // 2. Initialize the billing UI based on the default 'instore' tab
+    updateBillDetails();
+    // 3. Fetch remote data (store info/addresses) without blocking the UI
+    if (window.StoreService) {
+        window.StoreService.getStoreData().then(store => {
+            if (store) {
+                document.getElementById('pickup-store-name').textContent = store.name;
+                document.getElementById('pickup-store-address').textContent = store.address || "Store Location";
+            }
+        });
+        fetchUserAddresses();
+    }
 });
 
-/**
- * 1. Load data from the store-specific cart
- */
-async function loadCartData() {
-    // Get the store-specific cart via StoreService
-    const cart = window.StoreService ? window.StoreService.getCart() : {};
+function loadCartData() {
+    let cart = {};
+    try {
+        if (window.StoreService) {
+            cart = window.StoreService.getCart();
+        } else {
+            const storeId = localStorage.getItem("active_store_id");
+            cart = JSON.parse(localStorage.getItem(`cart_${storeId}`)) || {};
+        }
+    } catch (e) { cart = {}; }
+
     let subtotal = 0;
     let itemCount = 0;
 
-    const items = Object.values(cart);
-    items.forEach(item => {
+    Object.values(cart).forEach(item => {
         subtotal += (item.qty * item.price);
         itemCount += item.qty;
     });
 
-    if (itemCount > 0) {
-        // Apply 4% discount logic (matching your UI)
-        const discount = Math.round(subtotal * 0.04); 
-        const itemTotal = subtotal - discount;
-        
-        // Update Static Item UI
-        document.getElementById('item-price').textContent = subtotal.toFixed(2);
-        document.getElementById('discount-amount').textContent = discount.toFixed(2);
-        document.getElementById('item-total').textContent = itemTotal.toFixed(2);
-        
-        // Update Footer Static info
-        document.getElementById('footer-original').textContent = subtotal.toFixed(2);
-        document.getElementById('footer-items').textContent = itemCount;
+    // Update base fields immediately
+    const discount = Math.round(subtotal * 0.04); 
+    document.getElementById('item-price').textContent = subtotal.toFixed(2);
+    document.getElementById('discount-amount').textContent = discount.toFixed(2);
+    document.getElementById('footer-original').textContent = subtotal.toFixed(2);
+    document.getElementById('footer-items').textContent = itemCount;
 
-        // Apply logic for Delivery Charges and Final Totals
-        updateBillDetails();
-    } else {
-        // Hide footer if cart is empty
+    if (itemCount <= 0) {
         const footer = document.querySelector('.checkout-footer');
         if (footer) footer.style.display = 'none';
     }
+    
+    return cart;
 }
 
-/**
- * 2. Update bill details based on delivery type (Home vs Pickup)
- */
 function updateBillDetails() {
-    const cart = window.StoreService ? window.StoreService.getCart() : {};
-    let subtotal = 0;
-    Object.values(cart).forEach(item => subtotal += (item.qty * item.price));
-
-    const discount = Math.round(subtotal * 0.04);
+    // 🔥 FIX: Read directly from the variables to ensure we don't get 0 from a slow DOM
+    const subtotal = parseFloat(document.getElementById('item-price').textContent || 0);
+    const discount = parseFloat(document.getElementById('discount-amount').textContent || 0);
     const itemTotal = subtotal - discount;
     
-    // 🔥 Delivery logic: ₹30 for home delivery, ₹0 for pickup
-    let deliveryCharge = (currentTab === 'home') ? 30 : 0;
+    let deliveryCharge = (currentTab === 'standard') ? 30 : 0;
     
-    const deliveryEl = document.getElementById('delivery-amount-value');
+    const deliveryEl = document.getElementById('delivery-val');
     if (deliveryCharge > 0) {
-        deliveryEl.innerHTML = `<span style="color: var(--text-grey); font-weight: 600;">₹${deliveryCharge}</span>`;
+        deliveryEl.innerHTML = `<span style="color: var(--text-grey); font-weight: 600;">₹${deliveryCharge.toFixed(2)}</span>`;
     } else {
         deliveryEl.innerHTML = `<span class="free-text">FREE</span>`;
     }
 
     const finalPrice = itemTotal + deliveryCharge;
     
-    // Update Final "To Pay" displays
+    // Update the final displays
     document.getElementById('total-pay').textContent = finalPrice.toFixed(2);
     document.getElementById('footer-total').textContent = finalPrice.toFixed(2);
 }
 
 /**
- * 3. Tab Switching (Home vs Pickup)
+ * 6. Updated Tab Switching
  */
 function switchTab(tab) {
     currentTab = tab;
     const tabs = document.querySelectorAll('.delivery-tab');
     tabs.forEach(t => t.classList.remove('active'));
 
-    const homeSection = document.getElementById('home-address-section');
-    const pickupSection = document.getElementById('self-pickup-section');
+    document.getElementById('instore-section').style.display = 'none';
+    document.getElementById('self-pickup-section').style.display = 'none';
+    document.getElementById('standard-delivery-section').style.display = 'none';
 
-    if (tab === 'home') {
+    if (tab === 'instore') {
         tabs[0].classList.add('active');
-        if (homeSection) homeSection.style.display = 'block';
-        if (pickupSection) pickupSection.style.display = 'none';
-    } else {
+        document.getElementById('instore-section').style.display = 'block';
+    } else if (tab === 'pickup') {
         tabs[1].classList.add('active');
-        if (homeSection) homeSection.style.display = 'none';
-        if (pickupSection) pickupSection.style.display = 'block';
+        document.getElementById('self-pickup-section').style.display = 'block';
+    } else if (tab === 'standard') {
+        tabs[2].classList.add('active');
+        document.getElementById('standard-delivery-section').style.display = 'block';
     }
 
-    // Refresh calculations for delivery charge change
-    updateBillDetails();
+    updateBillDetails(); // Trigger re-calculation of delivery fee
 }
 
+
+
 /**
- * 4. Place Order logic
+ * 8. Final Order Submission
  */
 async function placeOrder() {
     const btn = document.querySelector('.place-order-btn');
@@ -1155,33 +1079,26 @@ async function placeOrder() {
     
     if (!token) {
         alert("Please login to place an order.");
-        // Optional: trigger your login modal here
         return;
     }
 
-    // 1. Prepare Data from StoreService and UI
     const storeId = window.StoreService.getStoreId();
     const cart = window.StoreService.getCart();
     const items = Object.values(cart).map(item => ({
-        product_id: item.id,
+        product_id: parseInt(item.id),
         quantity: item.qty
     }));
 
-    if (items.length === 0) {
-        alert("Your cart is empty!");
-        return;
-    }
+    const modeMapping = { 'instore': 0, 'pickup': 1, 'standard': 2 };
 
-    // 2. Construct Payload
     const payload = {
         store_id: parseInt(storeId),
         items: items,
-        tax: 0, // Set as per your backend requirement
-        delivery_charge: (currentTab === 'home') ? 30 : 0,
-        delivery_mode: (currentTab === 'home') ? 0 : 1 // 0 for Home, 1 for Pickup
+        tax: 0,
+        delivery_charge: (currentTab === 'standard') ? 30 : 0,
+        delivery_mode: modeMapping[currentTab]
     };
 
-    // 3. API Call
     try {
         btn.disabled = true;
         btn.textContent = "PROCESSING...";
@@ -1196,40 +1113,53 @@ async function placeOrder() {
         });
 
         if (response.ok) {
-            const result = await response.json();
-            console.log("Order Success:", result);
-
-            // Clear the store-specific cart upon success
-            window.StoreService.saveCart({});
-            
-            // Show success modal
+            window.StoreService.saveCart({}); // Clear cart for this store
+            loadCartData(); // Reload cart and update all bill fields from empty cart
+            updateBillDetails(); // Update UI after clearing cart
             document.getElementById('order-success-modal').classList.add('active');
-            document.body.style.overflow = 'hidden';
         } else {
-            const errorData = await response.json();
-            alert(`Order Failed: ${errorData.detail || 'Unknown error'}`);
+            const err = await response.json();
+            alert(`Error: ${err.detail || 'Order failed'}`);
             btn.disabled = false;
             btn.textContent = "PLACE ORDER";
         }
-    } catch (error) {
-        console.error("Order Error:", error);
-        alert("Network error. Please try again.");
+    } catch (e) {
+        alert("Network error.");
         btn.disabled = false;
         btn.textContent = "PLACE ORDER";
     }
 }
 
-/* ============================================================
-   UI & MODAL HELPERS (ADDRESS, MAP, TIME)
-   ============================================================ */
+// Modal Toggle Helpers
+function openAddressModal() { document.getElementById('address-modal').classList.add('active'); }
+function closeAddressModal() { document.getElementById('address-modal').classList.remove('active'); }
 
-function openAddressModal() {
-    document.getElementById('address-modal').classList.add('active');
+async function submitNewAddress() {
+    const token = window.AuthToken.get();
+    const payload = {
+        lat: 0, long: 0,
+        address_line1: document.getElementById('addr1-input').value,
+        address_line2: document.getElementById('addr2-input').value,
+        pincode: document.getElementById('pin-input').value,
+        city: document.getElementById('city-input').value,
+        state: document.getElementById('state-input').value,
+        country: "India",
+        permanant_address: false
+    };
+
+    try {
+        const resp = await fetch(`${window.BASE_URL}/api/v1/addresses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+        });
+        if (resp.ok) {
+            await fetchUserAddresses();
+            closeAddressModal();
+        }
+    } catch (e) { console.error(e); }
 }
 
-function closeAddressModal() {
-    document.getElementById('address-modal').classList.remove('active');
-}
 
 function selectAddress(index, address) {
     selectedAddressIndex = index;

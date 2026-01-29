@@ -109,13 +109,16 @@ id: p.id || p.product_id|| null,
         stock: p.stock || null
       }))
     }));
-
-    return {
-      id: store.id,
-      name: store.name,
-      address: store.address,
-      categories
-    };
+    // store-service.js - Update the return statement in getStoreData
+return {
+  id: store.id,
+  name: store.name,
+  logo: store.logo, // Add this to show the store icon in index.html
+  address: store.address,
+  video: store.video, 
+  poster: store.poster,
+  categories
+};
   },
 
   /* ===============================
