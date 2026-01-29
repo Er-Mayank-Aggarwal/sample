@@ -12,6 +12,10 @@
       import AuthToken from './auth-token.js';
       window.AuthToken = AuthToken;
     </script>
+    <script type="module">
+  import userId from './user-id.js';
+  window.userId = userId;
+</script>
 
   <style>
     :root {
@@ -420,7 +424,13 @@ async function handleVerifyOTP() {
     // 4. Handle Final Response (from Login or Register)
     if (resp.ok) {
       if (data && data.access_token) {
+        console.log("Setting access token:", data.access_token);
+        console.log(data);
         AuthToken.set(data.access_token);
+      }
+      if (data && data.user.id) {
+        console.log("Setting userId to:", data.user.id);
+        window.userId.set(data.user.id);
       }
       msg.textContent = "Success! Redirecting...";
       window.location.href = "shipping.html";
@@ -578,6 +588,9 @@ function submitNewRegistration() {
         AuthToken.set(data.access_token); //
         // 🔥 NEW: Merge guest items to backend
         await window.mergeLocalCartToServer();
+      }
+      if (data && data.user.id) {
+        window.userId.set(data.user.id);
       }
       msg.textContent = "Registered successfully!";
       setTimeout(() => { window.location.href = "shipping.html"; }, 800);

@@ -13,6 +13,11 @@
       import AuthToken from './auth-token.js';
       window.AuthToken = AuthToken;
     </script>
+    <script type="module">
+  import userId from './user-id.js';
+  window.userId = userId;
+</script>
+
     <style>
         :root {
             --primary-blue: #4280FD;
@@ -1167,9 +1172,9 @@ async function submitNewAddress() {
         country: "India",
         permanant_address: false
     };
-
+    const uid = await window.userId.wait(); // ✅ NEVER NULL
     try {
-        const resp = await fetch(`${window.BASE_URL}/api/v1/addresses`, {
+        const resp = await fetch(`${window.BASE_URL}/api/v1/address/${uid}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify(payload)

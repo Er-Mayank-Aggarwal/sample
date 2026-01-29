@@ -16,6 +16,10 @@
     import AuthToken from './auth-token.js';
     window.AuthToken = AuthToken;
   </script>
+  <script type="module">
+    import userId from './user-id.js';
+    window.userId = userId;
+  </script>
   <script type="module" src="firebase-login.js"></script>
   <script src="phone-helper.js"></script>
   <style>
@@ -481,6 +485,10 @@ async function handleVerifyOTP() {
       if (data && data.access_token) {
         AuthToken.set(data.access_token);
       }
+      if(data.user.id)
+      {
+        userId.set(data.user.id);
+      }
       msg.textContent = "Success! Redirecting...";
       const shouldAutoFollow = localStorage.getItem('PENDING_FOLLOW');
       if (shouldAutoFollow === 'true') {
@@ -599,6 +607,10 @@ function resendOTP() {
             if (resp.ok) {
               if (data && data.access_token) {
                 AuthToken.set(data.access_token);
+              }
+              if(data.user.id)
+              {
+                window.userId.set(data.user.id);
               }
               msg.textContent = "Success! Redirecting...";
               window.location.href = "shipping.html";
