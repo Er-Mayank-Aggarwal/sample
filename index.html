@@ -649,7 +649,14 @@ function resendOTP() {
           // A. Update Name & Title
           document.getElementById('store-name').textContent = data.name;
           document.title = data.name + " - Listerr Edition";
+          console.log('Setting video src to:', data.video);
+const video = document.getElementById('video-el');
+const source = document.getElementById('video-source');
 
+if (data.video) {
+  source.src = data.video;
+  video.load();
+}
           // B. Update Logo
           const logoImg = document.getElementById('store-logo');
           if (data.logo) {
@@ -802,19 +809,23 @@ function resendOTP() {
       <div class="swipe-arrow"></div>
       <div class="swipe-text">View Menu</div>
     </div>
+<!-- HERO BACKGROUND VIDEO -->
+<div id="hero-video-container"
+     style="position:absolute; inset:0; z-index:1; overflow:hidden;">
 
+  <video
+    id="video-el"
+    autoplay
+    loop
+    muted
+    playsinline
+    preload="auto"
+    style="width:100%; height:100%; object-fit:cover;"
+  >
+    <source id="video-source" src="" type="video/mp4">
+  </video>
 
-    <amp-story standalone title="Jars n' More" publisher="Jars n' More"
-      poster-portrait-src="https://cdn.suvichaar.org/upload/jarsnmore/jarnmore.jpg">
-      <amp-story-page id="page1">
-        <amp-story-grid-layer template="fill">
-          <amp-video id="amp-video-el" layout="fill" poster="https://cdn.suvichaar.org/upload/jarsnmore/jarnmore.jpg"
-            autoplay loop>
-            <source src="https://cdn.suvichaar.org/upload/jarsnmore/Jar.mp4" type="video/mp4">
-          </amp-video>
-        </amp-story-grid-layer>
-      </amp-story-page>
-    </amp-story>
+</div>
 
     <div id="catalog-drawer">
       <div class="catalog-header">
@@ -834,9 +845,6 @@ function resendOTP() {
 
   </div>
 
-  <script src="https://cdn.ampproject.org/v0.js" async></script>
-  <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
-  <script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>
 
   <script>
     // State variable to track if we are inside a product page
