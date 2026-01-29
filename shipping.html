@@ -1010,7 +1010,6 @@ function loadCartData() {
     document.getElementById('item-price').textContent = subtotal.toFixed(2);
     document.getElementById('discount-amount').textContent = discount.toFixed(2);
     document.getElementById('footer-original').textContent = subtotal.toFixed(2);
-    document.getElementById('footer-items').textContent = itemCount;
 
     if (itemCount <= 0) {
         const footer = document.querySelector('.checkout-footer');

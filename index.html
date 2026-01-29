@@ -688,35 +688,7 @@ function resendOTP() {
             followBtn.textContent = 'Follow';
           }
 
-          // D. Inject Video (Correctly for AMP)
-          // We must inject the entire amp-video tag to ensure the new source loads
-          const videoLayer = document.querySelector('amp-story-grid-layer');
-          // D. Inject Video (The Correct Way)
-// D. Inject Video (The Correct Way)
-if (data.video) {
-    const ampVideo = document.getElementById('amp-video-el');
-    
-    if (ampVideo) {
-        // Only proceed if the data.video is a valid string URL
-        const videoUrl = typeof data.video === 'string' ? data.video : data.video.url;
         
-        if (data.poster) {
-            ampVideo.setAttribute('poster', data.poster);
-        }
-
-        // Use the AMP 'mutateElement' to safely update attributes
-        if (ampVideo.mutateElement) {
-            ampVideo.mutateElement(() => {
-                ampVideo.setAttribute('src', videoUrl);
-                let sourceTag = ampVideo.querySelector('source');
-                if (sourceTag) sourceTag.setAttribute('src', videoUrl);
-            });
-        } else {
-            // Fallback for immediate attribute setting
-            ampVideo.setAttribute('src', videoUrl);
-        }
-    }
-}
         }
       });
       // Try to set user image if available (replace with your logic)
