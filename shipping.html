@@ -878,6 +878,27 @@
             </div>
         </div>
     </div>
+
+     <div class="order-success-overlay" id="order-success-modal">
+        <div class="success-confetti">
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+        </div>
+        <div class="success-title">Congratulations<br>Your order<br>has been accepted</div>
+        <div class="success-subtitle">You may now proceed to pay online (or pay on delivery).</div>
+        <button class="back-to-menu-btn" onclick="window.parent.closeCart()">BACK TO MENU</button>
+    </div>
   
     <!-- Leaflet JS for interactive map -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1084,7 +1105,7 @@ async function placeOrder() {
     const storeId = window.StoreService.getStoreId();
     const cart = window.StoreService.getCart();
     const items = Object.values(cart).map(item => ({
-        product_id: parseInt(item.id),
+        product_id: item.id,
         quantity: item.qty
     }));
 
@@ -1123,6 +1144,7 @@ async function placeOrder() {
             btn.textContent = "PLACE ORDER";
         }
     } catch (e) {
+        console.error("Order placement error", e);
         alert("Network error.");
         btn.disabled = false;
         btn.textContent = "PLACE ORDER";
