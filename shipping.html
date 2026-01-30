@@ -852,30 +852,61 @@
             <div id="saved-addresses-list"></div>
 
             <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
-                <div style="font-weight:800; color:var(--primary-blue); margin-bottom:10px; font-size:14px">ADD NEW ADDRESS</div>
-                <div class="form-group">
-                    <label class="form-label">PINCODE</label>
-                    <input type="text" class="form-input" id="pin-input" maxlength="6" oninput="handlePincode(this.value)" placeholder="Enter 6-digit pincode">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Address Line 1</label>
-                    <input type="text" class="form-input" id="addr1-input" placeholder="House/Flat No, Building">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Address Line 2</label>
-                    <input type="text" class="form-input" id="addr2-input" placeholder="Street, Landmark">
-                </div>
-                <div style="display:flex; gap:10px">
-                    <div class="form-group" style="flex:1">
-                        <label class="form-label">City</label>
-                        <input type="text" class="form-input" id="city-input" readonly>
-                    </div>
-                    <div class="form-group" style="flex:1">
-                        <label class="form-label">State</label>
-                        <input type="text" class="form-input" id="state-input" readonly>
-                    </div>
-                </div>
-            </div>
+
+  <div class="form-group">
+    <label class="form-label">Address Line 1</label>
+    <input type="text" class="form-input" id="addr1-input" placeholder="House / Flat / Building">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Address Line 2</label>
+    <input type="text" class="form-input" id="addr2-input" placeholder="Street, Area, Landmark">
+  </div>
+
+  <div style="display:flex; gap:10px">
+    <div class="form-group" style="flex:1">
+      <label class="form-label">City</label>
+      <input type="text" class="form-input" id="city-input">
+    </div>
+
+    <div class="form-group" style="flex:1">
+      <label class="form-label">Pincode</label>
+      <input type="text" class="form-input" id="pin-input" maxlength="6"
+             oninput="handlePincode(this.value)">
+    </div>
+  </div>
+
+  <div style="display:flex; gap:10px">
+    <div class="form-group" style="flex:1">
+      <label class="form-label">State</label>
+      <input type="text" class="form-input" id="state-input">
+    </div>
+
+    <div class="form-group" style="flex:1">
+      <label class="form-label">Country</label>
+      <input type="text" class="form-input" id="country-input" value="India">
+    </div>
+  </div>
+
+  <!-- Permanent address -->
+  <div style="display:flex; align-items:center; gap:10px; margin-top:6px">
+    <input type="checkbox" id="permanent-input">
+    <label for="permanent-input" style="font-size:14px">
+      Set as permanent address
+    </label>
+  </div>
+
+  <!-- Map button -->
+  <button type="button"
+          onclick="openMapModal()"
+          style="margin-top:12px; width:100%; padding:10px;
+                 border:1px solid #4280FD; background:white;
+                 color:#4280FD; border-radius:8px; font-weight:700">
+    📍 Pick location from map
+  </button>
+
+</div>
+
             
             <div style="display:flex; justify-content:space-between; margin-top:15px">
                 <button onclick="closeAddressModal()" style="border:none; background:none; color:red; font-weight:700">CANCEL</button>
@@ -904,7 +935,42 @@
         <div class="success-subtitle">You may now proceed to pay online (or pay on delivery).</div>
         <button class="back-to-menu-btn" onclick="window.parent.closeCart()">BACK TO MENU</button>
     </div>
-  
+  <div class="modal-overlay" id="map-modal">
+  <div class="address-modal">
+
+
+        <div class="modal-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>Pick location</span>
+            <button id="locate-me-btn" title="Detect my location" style="background:none;border:none;cursor:pointer;font-size:20px;color:#4280FD;display:flex;align-items:center;gap:4px;">
+                <i class="fas fa-crosshairs"></i>
+            </button>
+        </div>
+
+        <div id="leaflet-map" style="height:300px; border-radius:12px; overflow:hidden"></div>
+
+        <div id="geo-error-msg" style="color:#F44336;font-size:13px;margin-top:8px;display:none"></div>
+
+        <div class="form-group" style="margin-top:12px">
+            <label class="form-label">Detected address</label>
+            <input id="map-address-input" class="form-input" readonly>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top:12px">
+            <button onclick="closeMapModal()"
+                            style="border:none;background:none;color:red;font-weight:700">
+                Cancel
+            </button>
+
+            <button onclick="closeMapModal()"
+                            style="background:#4280FD;color:white;border:none;
+                                         padding:10px 20px;border-radius:8px;font-weight:700">
+                Done
+            </button>
+        </div>
+
+  </div>
+</div>
+
     <!-- Leaflet JS for interactive map -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -912,6 +978,11 @@
  /* ============================================================
    SHIPPING & DELIVERY LOGIC (FIXED)
    ============================================================ */
+
+let pickedLat = null;
+let pickedLng = null;
+let leafletMap = null;
+let mapMarker = null;
 
 let userAddresses = [];
 let selectedAddrId = null;
@@ -937,18 +1008,38 @@ async function handlePincode(pin) {
 async function fetchUserAddresses() {
     const token = window.AuthToken.get();
     if (!token) return;
-
+    const uid = window.userId.get();
     try {
-        const resp = await fetch(`${window.BASE_URL}/api/v1/addresses`, {
+        const resp = await fetch(`${window.BASE_URL}/api/v1/address/${uid}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (resp.ok) {
-            userAddresses = await resp.json();
-            renderAddressList();
+    userAddresses = await resp.json();
+
+    // auto select permanent address
+    if (!selectedAddrId) {
+        const permanent = userAddresses.find(a => a.permanant_address);
+        if (permanent) {
+            selectedAddrId = permanent.id;
+            setSelectedAddressText(permanent);
         }
+    }
+
+    renderAddressList();
+}
+
     } catch (e) { 
         console.error("Fetch address error", e); 
     }
+}
+function setSelectedAddressText(addr) {
+
+    const full =
+      `${addr.address_line1}, ${addr.address_line2 || ''}, ` +
+      `${addr.city}, ${addr.state} - ${addr.pincode}`;
+
+    document.getElementById('selected-address').textContent =
+      full.replace(/,\s*,/g, ',');
 }
 
 // --- 3. RENDER ADDRESSES ---
@@ -956,12 +1047,16 @@ function renderAddressList() {
     const list = document.getElementById('saved-addresses-list');
     if(!list) return;
     list.innerHTML = userAddresses.map(addr => `
-        <div class="saved-address" onclick="selectExistingAddress(${addr.id}, '${addr.address_line1}, ${addr.city}')">
+        <div class="saved-address" onclick="selectExistingAddress(${addr.id})">
             <div class="address-radio ${selectedAddrId === addr.id ? 'selected' : ''}"></div>
             <div class="saved-address-content">
-                <div class="saved-address-text">
-                    ${addr.address_line1}, ${addr.city} - ${addr.pincode}
-                </div>
+               <div class="saved-address-text">
+  ${addr.address_line1}, ${addr.city} - ${addr.pincode}
+  ${addr.permanant_address
+    ? `<div class="default-badge">Permanent</div>`
+    : ``}
+</div>
+
             </div>
             <i class="fas fa-trash-alt" style="color:#F44336; padding: 10px; cursor: pointer;" 
                onclick="event.stopPropagation(); deleteAddress(${addr.id})"></i>
@@ -969,18 +1064,26 @@ function renderAddressList() {
     `).join('');
 }
 
-function selectExistingAddress(id, fullText) {
+function selectExistingAddress(id) {
+
+    const addr = userAddresses.find(a => a.id === id);
+    if (!addr) return;
+
     selectedAddrId = id;
-    document.getElementById('selected-address').textContent = fullText;
+
+    setSelectedAddressText(addr);
+
     renderAddressList();
 }
+
 
 // --- 4. DELETE ADDRESS ---
 async function deleteAddress(id) {
     if (!confirm("Delete this address?")) return;
     const token = window.AuthToken.get();
+    const uid = window.userId.get();
     try {
-        const resp = await fetch(`${window.BASE_URL}/api/v1/addresses/${id}`, {
+        const resp = await fetch(`${window.BASE_URL}/api/v1/addresses/${uid}/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -1161,30 +1264,49 @@ function openAddressModal() { document.getElementById('address-modal').classList
 function closeAddressModal() { document.getElementById('address-modal').classList.remove('active'); }
 
 async function submitNewAddress() {
+
     const token = window.AuthToken.get();
+
     const payload = {
-        lat: 0, long: 0,
-        address_line1: document.getElementById('addr1-input').value,
-        address_line2: document.getElementById('addr2-input').value,
-        pincode: document.getElementById('pin-input').value,
-        city: document.getElementById('city-input').value,
-        state: document.getElementById('state-input').value,
-        country: "India",
-        permanant_address: false
+        lat: pickedLat ?? 0,
+        long: pickedLng ?? 0,
+        address_line1: document.getElementById('addr1-input').value.trim(),
+        address_line2: document.getElementById('addr2-input').value.trim(),
+        pincode: document.getElementById('pin-input').value.trim(),
+        city: document.getElementById('city-input').value.trim(),
+        state: document.getElementById('state-input').value.trim(),
+        country: document.getElementById('country-input').value.trim() || "India",
+        permanant_address: document.getElementById('permanent-input').checked
     };
-    const uid = await window.userId.wait(); // ✅ NEVER NULL
+
+    if (!payload.address_line1 || !payload.city || !payload.pincode) {
+        alert("Please fill required address fields");
+        return;
+    }
+
+    const uid = await window.userId.wait();
+
     try {
         const resp = await fetch(`${window.BASE_URL}/api/v1/address/${uid}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(payload)
         });
+
         if (resp.ok) {
             await fetchUserAddresses();
             closeAddressModal();
         }
-    } catch (e) { console.error(e); }
+
+    } catch (e) {
+        console.error(e);
+        alert("Unable to save address");
+    }
 }
+
 
 
 function selectAddress(index, address) {
@@ -1208,21 +1330,102 @@ function openMapModal() {
 
 function initLeafletMap() {
     if (leafletMap) leafletMap.remove();
-    leafletMap = L.map('leaflet-map').setView([26.8779, 75.2372], 14);
+    leafletMap = L.map('leaflet-map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(leafletMap);
-    
-    leafletMap.on('click', function(e) {
+
+    // Custom icon for user's location
+    const userIcon = L.icon({
+        iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon-2x-blue.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-shadow.png',
+        shadowSize: [41, 41]
+    });
+
+    function setMapToLocation(lat, lng) {
+        leafletMap.setView([lat, lng], 16);
+        pickedLat = lat;
+        pickedLng = lng;
         if (mapMarker) leafletMap.removeLayer(mapMarker);
-        mapMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(leafletMap);
-        reverseGeocode(e.latlng.lat, e.latlng.lng);
+        // Always use a new marker instance to avoid icon issues
+        mapMarker = L.marker([lat, lng], {icon: userIcon}).addTo(leafletMap);
+        reverseGeocode(lat, lng);
+    }
+
+    function showGeoError(msg) {
+        const geoMsg = document.getElementById('geo-error-msg');
+        geoMsg.textContent = msg;
+        geoMsg.style.display = 'block';
+        // Clear address input if error
+        document.getElementById('map-address-input').value = '';
+    }
+    function clearGeoError() {
+        const geoMsg = document.getElementById('geo-error-msg');
+        geoMsg.textContent = '';
+        geoMsg.style.display = 'none';
+    }
+
+    // Try to get user's current location
+    function tryLocateUser() {
+        clearGeoError();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    setMapToLocation(position.coords.latitude, position.coords.longitude);
+                    clearGeoError();
+                },
+                function(error) {
+                    let msg = 'Could not detect your location.';
+                    if (error.code === 1) msg = 'Location permission denied. Please allow location access.';
+                    showGeoError(msg);
+                    // Remove marker and clear address if error
+                    if (mapMarker) leafletMap.removeLayer(mapMarker);
+                    document.getElementById('map-address-input').value = '';
+                    pickedLat = null;
+                    pickedLng = null;
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        } else {
+            showGeoError('Geolocation not supported by your browser.');
+            if (mapMarker) leafletMap.removeLayer(mapMarker);
+            document.getElementById('map-address-input').value = '';
+            pickedLat = null;
+            pickedLng = null;
+        }
+    }
+
+    // Initial attempt
+    tryLocateUser();
+
+    // Locate-me button
+    setTimeout(() => {
+        const btn = document.getElementById('locate-me-btn');
+        if (btn) btn.onclick = tryLocateUser;
+    }, 0);
+
+    leafletMap.on('click', function(e) {
+        pickedLat = e.latlng.lat;
+        pickedLng = e.latlng.lng;
+        if (mapMarker) leafletMap.removeLayer(mapMarker);
+        mapMarker = L.marker([pickedLat, pickedLng], {icon: userIcon}).addTo(leafletMap);
+        reverseGeocode(pickedLat, pickedLng);
+        clearGeoError();
     });
 }
 
 async function reverseGeocode(lat, lng) {
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-    const data = await response.json();
-    if (data && data.display_name) {
-        document.getElementById('map-address-input').value = data.display_name;
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        const data = await response.json();
+        if (data && data.display_name) {
+            document.getElementById('map-address-input').value = data.display_name;
+        } else {
+            document.getElementById('map-address-input').value = '';
+        }
+    } catch (e) {
+        document.getElementById('map-address-input').value = '';
     }
 }
 
