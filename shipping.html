@@ -851,7 +851,15 @@
             
             <div id="saved-addresses-list"></div>
 
-            <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
+            <button onclick="toggleAddAddress()"
+        style="width:100%;margin-top:10px;border:none;background:none;
+               color:#4280FD;font-weight:700;text-align:left">
+➕ Add new address
+</button>
+
+<div id="add-address-form"
+     style="display:none;margin-top:12px;border-top:1px solid #eee;padding-top:15px;">
+
 
   <div class="form-group">
     <label class="form-label">Address Line 1</label>
@@ -910,7 +918,7 @@
             
             <div style="display:flex; justify-content:space-between; margin-top:15px">
                 <button onclick="closeAddressModal()" style="border:none; background:none; color:red; font-weight:700">CANCEL</button>
-                <button onclick="submitNewAddress()" style="background:var(--primary-blue); color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:700">SAVE & USE</button>
+                <button onclick="submitNewAddress()" style="background:var(--primary-blue); color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:700" id="save-use-btn">SAVE & USE</button>
             </div>
         </div>
     </div>
@@ -987,6 +995,12 @@ let mapMarker = null;
 let userAddresses = [];
 let selectedAddrId = null;
 let currentTab = 'instore'; 
+
+function toggleAddAddress() {
+    const el = document.getElementById("add-address-form");
+    el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
 // --- 1. PINCODE AUTO-FILL ---
 async function handlePincode(pin) {
     if (pin.length === 6) {
@@ -1018,7 +1032,7 @@ async function fetchUserAddresses() {
 
     // auto select permanent address
     if (!selectedAddrId) {
-        const permanent = userAddresses.find(a => a.permanant_address);
+        const permanent = userAddresses.find(a => a.permanent_address);
         if (permanent) {
             selectedAddrId = permanent.id;
             setSelectedAddressText(permanent);
@@ -1052,7 +1066,7 @@ function renderAddressList() {
             <div class="saved-address-content">
                <div class="saved-address-text">
   ${addr.address_line1}, ${addr.city} - ${addr.pincode}
-  ${addr.permanant_address
+  ${addr.permanent_address
     ? `<div class="default-badge">Permanent</div>`
     : ``}
 </div>
@@ -1074,6 +1088,7 @@ function selectExistingAddress(id) {
     setSelectedAddressText(addr);
 
     renderAddressList();
+    closeAddressModal();   // 👈 important
 }
 
 
@@ -1083,7 +1098,7 @@ async function deleteAddress(id) {
     const token = window.AuthToken.get();
     const uid = window.userId.get();
     try {
-        const resp = await fetch(`${window.BASE_URL}/api/v1/addresses/${uid}/${id}`, {
+        const resp = await fetch(`${window.BASE_URL}/api/v1/address/${uid}/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -1265,6 +1280,9 @@ function closeAddressModal() { document.getElementById('address-modal').classLis
 
 async function submitNewAddress() {
 
+    const btn = document.getElementById("save-use-btn");
+    btn.textContent = "SAVING...";
+
     const token = window.AuthToken.get();
 
     const payload = {
@@ -1281,6 +1299,8 @@ async function submitNewAddress() {
 
     if (!payload.address_line1 || !payload.city || !payload.pincode) {
         alert("Please fill required address fields");
+        btn.disabled = false;
+        btn.textContent = "SAVE & USE";
         return;
     }
 
@@ -1297,15 +1317,23 @@ async function submitNewAddress() {
         });
 
         if (resp.ok) {
-            await fetchUserAddresses();
-            closeAddressModal();
+            await fetchUserAddresses();   // reload addresses
+            // Get the latest address (assuming it's the last one)
+            const addresses = userAddresses || [];
+            if (addresses.length > 0) {
+                setSelectedAddressText(addresses[addresses.length - 1]);
+            }
+            closeAddressModal();         // update delivery tab automatically
         }
 
     } catch (e) {
-        console.error(e);
         alert("Unable to save address");
     }
+
+    btn.disabled = false;
+    btn.textContent = "SAVE & USE";
 }
+
 
 
 
